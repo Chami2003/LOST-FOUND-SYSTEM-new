@@ -6,11 +6,6 @@ const app = express();
 
 // middleware
 
-
-app.use(express.json()); 
-app.use("/api/lost-items", require("./Route/lostItemRoutes"));
-
-
 app.use("/", (req, res, next) => {
     res.send("It is working ");
 });
