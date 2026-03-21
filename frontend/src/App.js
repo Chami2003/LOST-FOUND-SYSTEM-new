@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import './App.css';
+// පින්තූරය මෙතැනින් import කරන්න
+import sliitCampusImg from './sliit-campus.jpg'; 
 
 // --- Styles ---
 const styles = {
@@ -11,7 +13,7 @@ const styles = {
   td: { padding: "12px", textAlign: "left" },
   editBtn: { padding: "5px 10px", backgroundColor: "#f1c40f", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", marginRight: "5px" },
   deleteBtn: { padding: "5px 10px", backgroundColor: "#e74c3c", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" },
-  nav: { marginBottom: "30px", display: "flex", justifyContent: "center", gap: "25px", background: "#2c3e50", padding: "15px", borderRadius: "10px" },
+  nav: { marginBottom: "30px", display: "flex", justifyContent: "center", gap: "25px", background: "rgba(44, 62, 80, 0.9)", padding: "15px", borderRadius: "10px" },
   navLink: { textDecoration: 'none', color: 'white', fontWeight: 'bold', fontSize: '18px' }
 };
 
@@ -26,7 +28,6 @@ function App() {
   const campusCategories = ["ID Card", "Student Record Book", "Laptop/Charger", "Mobile Phone", "Calculator", "Water Bottle", "Bag/Folder", "Wallet/Purse", "Other"];
   const today = new Date().toISOString().split('T')[0];
 
-  // දත්ත ලබා ගැනීම
   const fetchItems = async () => {
     try {
       const response = await axios.get("http://localhost:5001/api/found-items/all");
@@ -42,7 +43,6 @@ function App() {
     fetchItems();
   }, []);
 
-  // දත්ත මකා දැමීම
   const deleteItem = async (id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
@@ -55,20 +55,26 @@ function App() {
     }
   };
 
-  // --- Main Layout ---
   return (
     <Router>
-      <div className="App" style={{ padding: "30px", textAlign: "center", backgroundColor: "#f4f7f6", minHeight: "100vh" }}>
+      <div className="App" style={{ 
+        padding: "30px", 
+        textAlign: "center", 
+        minHeight: "100vh",
+        // Background Image එක මෙතැනින් එකතු කර ඇත
+        backgroundImage: `linear-gradient(rgba(244, 247, 246, 0.8), rgba(244, 247, 246, 0.8)), url(${sliitCampusImg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}>
         <h1 style={{ color: "#2c3e50", marginBottom: "30px" }}>Campus Lost & Found System</h1>
         
-        {/* Navigation Bar */}
         <nav style={styles.nav}>
           <Link to="/" style={styles.navLink}>Register Item</Link>
           <Link to="/items" style={styles.navLink}>View Items List</Link>
         </nav>
 
         <Routes>
-          {/* Page 1: Registration Form */}
           <Route path="/" element={
             <RegistrationPage 
               inputs={inputs} setInputs={setInputs} 
@@ -78,7 +84,6 @@ function App() {
             />
           } />
 
-          {/* Page 2: Items Table */}
           <Route path="/items" element={
             <ListPage 
               items={items} deleteItem={deleteItem} 
@@ -91,7 +96,6 @@ function App() {
   );
 }
 
-// --- Registration Page Content ---
 function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentId, setCurrentId, fetchItems, campusCategories, today }) {
   const navigate = useNavigate();
 
@@ -116,7 +120,7 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
       }
       setInputs({ itemName: '', description: '', category: '', location: '', dateFound: '', contact: '' });
       fetchItems();
-      navigate('/items'); // Submit කළ පසු Table එකට යයි
+      navigate('/items');
     } catch (err) {
       alert("Error connecting to server.");
     }
@@ -136,7 +140,7 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
         <div style={{textAlign: 'left', fontSize: '12px', color: '#7f8c8d'}}>Date Found:</div>
         <input type="date" name="dateFound" value={inputs.dateFound} max={today} onChange={handleChange} style={styles.input} required />
         <input name="contact" value={inputs.contact} placeholder="Contact Number" onChange={handleChange} style={styles.input} required maxLength="10" />
-        <button type="submit" style={{ ...styles.button, backgroundColor: isEditing ? "#3498db" : "#2ecc71" }}>
+        <button type="submit" style={{ ...styles.button, backgroundColor: "#2c3e50" }}>
           {isEditing ? "Update Item" : "Submit Item"}
         </button>
       </form>
@@ -144,7 +148,6 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
   );
 }
 
-// --- List Page Content ---
 function ListPage({ items, deleteItem, setInputs, setIsEditing, setCurrentId }) {
   const navigate = useNavigate();
 
@@ -159,7 +162,7 @@ function ListPage({ items, deleteItem, setInputs, setIsEditing, setCurrentId }) 
       dateFound: item.dateFound ? item.dateFound.split('T')[0] : '',
       contact: item.contact
     });
-    navigate('/'); // Edit කිරීමට Form එකට යයි
+    navigate('/');
   };
 
   return (
