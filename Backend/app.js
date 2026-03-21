@@ -1,15 +1,14 @@
 
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+app.use("/api/lost-items", require("./Route/lostItemRoutes"));
 
 // middleware
-
-app.use("/", (req, res, next) => {
-    res.send("It is working ");
-});
-
 
 
 mongoose.connect("mongodb://admin:JODBgt9DODMBnSLV@ac-mi94ihy-shard-00-00.zxwd5yw.mongodb.net:27017,ac-mi94ihy-shard-00-01.zxwd5yw.mongodb.net:27017,ac-mi94ihy-shard-00-02.zxwd5yw.mongodb.net:27017/?ssl=true&replicaSet=atlas-13fnl4-shard-0&authSource=admin&retryWrites=true&w=majority")
