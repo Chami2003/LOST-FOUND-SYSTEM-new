@@ -6,11 +6,11 @@ const User = require("../Model/Model");
 
 router.get("/", controller.getAllUsers)
 
-router.post("/", async (req, res, next) => {
-    const { name, email, password } = req.body;
-    const user = new User({ name, email, password });
-    await user.save();
-    return res.status(201).json({ user });
-});
 
+router.post("/", controller.addUsers);
+
+router.get("/:id", controller.getById)
+router.put("/:id", controller.updateUser)
+
+//export
 module.exports = router;
