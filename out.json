@@ -1,0 +1,1 @@
+{"srv":[{"name":"ac-mi94ihy-shard-00-00.zxwd5yw.mongodb.net","port":27017,"priority":0,"weight":0,"type":"SRV"},{"name":"ac-mi94ihy-shard-00-01.zxwd5yw.mongodb.net","port":27017,"priority":0,"weight":0,"type":"SRV"},{"name":"ac-mi94ihy-shard-00-02.zxwd5yw.mongodb.net","port":27017,"priority":0,"weight":0,"type":"SRV"}],"txt":[["authSource=admin&replicaSet=atlas-13fnl4-shard-0"]]}
