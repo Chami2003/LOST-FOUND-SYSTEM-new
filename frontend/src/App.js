@@ -5,7 +5,124 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react
 // Campus background photo
 import campusBg from './campus.jpg'; 
 
-// --- 1. Form Page (Add Item Validation) ---
+// --- 1. NEW & ENHANCED LANDING PAGE (First Page) ---
+function LandingPage() {
+  const navigate = useNavigate();
+
+  const containerStyle = {
+    backgroundImage: `url(${campusBg})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    position: 'relative',
+  };
+
+  const overlayStyle = {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 26, 51, 0.7)', // Dark blue overlay for professional look
+    zIndex: 0
+  };
+
+  const headerStyle = {
+    zIndex: 1,
+    width: '100%',
+    padding: '20px 50px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    boxSizing: 'border-box'
+  };
+
+  const cardStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)', // Glass effect
+    padding: '40px 30px',
+    borderRadius: '20px',
+    width: '320px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.4s ease',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    zIndex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
+  };
+
+  return (
+    <div style={containerStyle}>
+      <div style={overlayStyle} />
+      
+      {/* Top Navigation / Branding */}
+      <header style={headerStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ backgroundColor: '#e67e22', color: 'white', padding: '10px', borderRadius: '12px', fontWeight: 'bold', fontSize: '20px' }}>🔍</div>
+          <h2 style={{ color: '#e67e22' }}>Lost & Found System</h2>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <div style={{ zIndex: 1, textAlign: 'center', marginTop: '60px', padding: '0 20px' }}>
+        <h1 style={{ color: 'white', fontSize: '50px', fontWeight: '800', marginBottom: '15px', textShadow: '2px 2px 10px rgba(0,0,0,0.3)' }}>
+          How can we help you today?
+        </h1>
+        <p style={{ color: '#ccc', fontSize: '20px', marginBottom: '50px', maxWidth: '700px', margin: '0 auto 60px auto', lineHeight: '1.6' }}>
+          Welcome to the University's official lost and found portal. Reconnecting you with your misplaced belongings quickly and easily.
+        </p>
+        
+        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* Option 1: Lost Item */}
+          <div 
+            style={cardStyle} 
+            onClick={() => navigate('/report-form')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-10px)';
+              e.currentTarget.style.borderColor = '#e67e22';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            }}
+          >
+            <div style={{ backgroundColor: '#e67e22', color: 'white', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '35px', marginBottom: '20px', boxShadow: '0 0 20px rgba(230, 126, 34, 0.5)' }}>✕</div>
+            <h3 style={{ color: 'white', marginBottom: '15px', fontSize: '24px' }}>I Lost Something</h3>
+            <p style={{ color: '#eee', fontSize: '15px', lineHeight: '1.4' }}>Submit a report for your lost item to our campus database.</p>
+            <button style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '30px', border: 'none', backgroundColor: '#e67e22', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>Report Lost</button>
+          </div>
+
+          {/* Option 2: Found Item (Inactive for now as requested) */}
+          <div style={{ ...cardStyle, opacity: 0.6, cursor: 'not-allowed' }}>
+            <div style={{ backgroundColor: '#003366', color: 'white', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '35px', marginBottom: '20px', border: '2px solid #e67e22' }}>✓</div>
+            <h3 style={{ color: 'white', marginBottom: '15px', fontSize: '24px' }}>I Found Something</h3>
+            <p style={{ color: '#eee', fontSize: '15px', lineHeight: '1.4' }}>Help a fellow student by reporting an item you've found.</p>
+            <button style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '30px', border: '1px solid white', backgroundColor: 'transparent', color: 'white', fontWeight: 'bold', cursor: 'not-allowed' }}>Report Found</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Stats (Visual enhancement only) */}
+      <div style={{ zIndex: 1, display: 'flex', gap: '80px', marginTop: '80px', color: 'white' }}>
+        <div style={{ textAlign: 'center' }}><h2 style={{ color: '#e67e22', margin: '0' }}>100+</h2><p style={{ fontSize: '14px', margin: '0' }}>Items Reported</p></div>
+        <div style={{ textAlign: 'center' }}><h2 style={{ color: '#e67e22', margin: '0' }}>50+</h2><p style={{ fontSize: '14px', margin: '0' }}>Returned Successfully</p></div>
+      </div>
+
+      <footer style={{ zIndex: 1, marginTop: 'auto', padding: '30px', color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
+        © 2026 Campus Lost & Found System | Secure Student Portal
+      </footer>
+    </div>
+  );
+}
+
+// --- 2. Form Page --
 function FormPage() {
   const [formData, setFormData] = useState({
     itemName: '', description: '', category: '', location: '', dateLost: '', contact: ''
@@ -15,19 +132,14 @@ function FormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 1. හිස් Field ඇත්දැයි පරීක්ෂා කිරීම
     if (!formData.itemName || !formData.description || !formData.category || !formData.location || !formData.dateLost || !formData.contact) {
       alert("Please fill all the fields before reporting.");
       return;
     }
-
-    // 2. දුරකථන අංක Validation එක (ඉලක්කම් 10)
     if (formData.contact.length !== 10) {
       alert("Please enter a valid 10-digit contact number.");
       return;
     }
-
     try {
       await axios.post('http://localhost:5001/api/lost-items/add', formData);
       alert("Item Reported Successfully! 🎉");
@@ -39,6 +151,7 @@ function FormPage() {
     <div style={pageBackgroundStyle}>
       <div style={fullOverlayStyle} /> 
       <div style={formContainerStyle}>
+        <Link to="/" style={{ color: '#003366', fontWeight: 'bold', textDecoration: 'none', marginBottom: '15px', display: 'inline-block', fontSize: '13px' }}>← Back to Home</Link>
         <h1 style={{ textAlign: 'center', color: '#003366', marginBottom: '5px' }}>🎓 REPORT LOST ITEM</h1>
         <p style={{ textAlign: 'center', color: '#666', marginBottom: '25px', fontSize: '14px' }}>Lost Something? We are here to help you</p>
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '15px' }}>
@@ -64,7 +177,7 @@ function FormPage() {
   );
 }
 
-// --- 2. List Page (Update Validation - No Empty Fields) ---
+// --- 3. List Page  ---
 function ListPage() {
   const [items, setItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -89,18 +202,14 @@ function ListPage() {
   };
 
   const handleUpdate = async (id) => {
-    // 1. Update කිරීමේදී කිසිම Field එකක් හිස්ව තිබිය නොහැක
     if (!editFormData.itemName || !editFormData.description || !editFormData.location || !editFormData.contact) {
       alert("Fields cannot be empty. Please fill in all details before saving.");
       return;
     }
-
-    // 2. දුරකථන අංක Validation එක (ඉලක්කම් 10)
     if (editFormData.contact.length !== 10) {
       alert("Please enter a valid 10-digit contact number.");
       return;
     }
-
     try {
       await axios.put(`http://localhost:5001/api/lost-items/update/${id}`, editFormData);
       setEditingId(null);
@@ -113,17 +222,16 @@ function ListPage() {
       <div style={fullOverlayStyle} />
       <div style={{ position: 'relative', width: '100%', padding: '40px', zIndex: 1 }}>
         <Link to="/" style={{ color: '#003366', fontWeight: 'bold', textDecoration: 'none', marginBottom: '20px', display: 'inline-block' }}>
-          ← Back to Form
+          ← Back to Home
         </Link>
-        <h2 style={{ textAlign: 'center', color: '#000', fontSize: '32px', fontWeight: 'bold', marginBottom: '40px' }}>
+        <h2 style={{ textAlign: 'center', color: '#003366', fontSize: '32px', fontWeight: 'bold', marginBottom: '40px' }}>
           Recent Reported Items
         </h2>
         
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '25px' }}>
           {items.map(item => (
-            <div key={item._id} style={cardStyle}>
+            <div key={item._id} style={cardStyleList}>
               {editingId === item._id ? (
-                // Edit Mode
                 <div style={{ display: 'grid', gap: '6px', height: '100%', overflowY: 'auto' }}>
                   <input style={smallInput} value={editFormData.itemName} onChange={(e) => setEditFormData({...editFormData, itemName: e.target.value})} required />
                   <select style={smallInput} value={editFormData.category} onChange={(e) => setEditFormData({...editFormData, category: e.target.value})} required>
@@ -135,7 +243,7 @@ function ListPage() {
                   <input style={smallInput} value={editFormData.location} onChange={(e) => setEditFormData({...editFormData, location: e.target.value})} required />
                   <input style={smallInput} value={editFormData.contact} onChange={(e) => setEditFormData({...editFormData, contact: e.target.value})} required />
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={() => handleUpdate(item._id)} style={{ ...actionBtn, backgroundColor: '#27ae60' }}>Save</button>
+                    <button onClick={() => handleUpdate(item._id)} style={{ ...actionBtn, backgroundColor: '#003366' }}>Save</button>
                     <button onClick={() => setEditingId(null)} style={{ ...actionBtn, backgroundColor: '#95a5a6' }}>Cancel</button>
                   </div>
                 </div>
@@ -151,7 +259,7 @@ function ListPage() {
                     <p style={{ fontSize: '12px', fontWeight: 'bold' }}>📞 {item.contact}</p>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                       <button onClick={() => { setEditingId(item._id); setEditFormData(item); }} style={{ ...actionBtn, backgroundColor: '#f39c12' }}>Edit</button>
-                      <button onClick={() => handleDelete(item._id)} style={{ ...actionBtn, backgroundColor: '#e74c3c' }}>Delete</button>
+                      <button onClick={() => handleDelete(item._id)} style={{ ...actionBtn, backgroundColor: '#003366' }}>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -164,22 +272,24 @@ function ListPage() {
   );
 }
 
-// --- Styles ---
+// --- Existing Styles  ---
 const pageBackgroundStyle = { backgroundImage: `url(${campusBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Segoe UI', sans-serif" };
 const fullOverlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.4)', zIndex: 0 };
 const formContainerStyle = { position: 'relative', maxWidth: '500px', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', margin: '20px', zIndex: 1 };
-const cardStyle = { backgroundColor: 'white', padding: '15px', borderRadius: '12px', width: '280px', height: '320px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' };
+const cardStyleList = { backgroundColor: 'white', padding: '15px', borderRadius: '12px', width: '280px', height: '320px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' };
 const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' };
 const btnStyle = { padding: '14px', borderRadius: '8px', border: 'none', backgroundColor: '#003366', color: 'white', fontWeight: 'bold', cursor: 'pointer' };
 const badgeStyle = { backgroundColor: '#e1f5fe', color: '#01579b', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' };
 const actionBtn = { border: 'none', color: 'white', padding: '8px', borderRadius: '5px', cursor: 'pointer', flex: 1, fontSize: '12px', fontWeight: 'bold' };
 const smallInput = { padding: '6px', borderRadius: '5px', border: '1px solid #ddd', fontSize: '12px', width: '100%' };
 
+// --- App Navigation ---
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<FormPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/report-form" element={<FormPage />} />
         <Route path="/items" element={<ListPage />} />
       </Routes>
     </Router>
