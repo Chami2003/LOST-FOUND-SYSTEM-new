@@ -1,4 +1,4 @@
-const User = require("../Model/Model");
+const User = require("../Model/UserModel");
 const nodemailer = require('nodemailer');
 
 const getAllUsers = async (req, res, next) => {

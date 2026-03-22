@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 //Insert Model
-const User = require("../Model/Model");
+const User = require("../Model/UserModel");
 const controller = require("../Controllers/UserControler");
 
 router.get("/", controller.getAllUsers)
