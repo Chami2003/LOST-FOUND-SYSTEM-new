@@ -1,0 +1,187 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react-router-dom';
+
+// Campus background photo
+import campusBg from './campus.jpg';
+
+// --- 1. Form Page (Add Item Validation) ---
+function FormPage() {
+    const [formData, setFormData] = useState({
+        itemName: '', description: '', category: '', location: '', dateLost: '', contact: ''
+    });
+    const navigate = useNavigate();
+    const today = new Date().toISOString().split('T')[0];
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // 1. හිස් Field ඇත්දැයි පරීක්ෂා කිරීම
+        if (!formData.itemName || !formData.description || !formData.category || !formData.location || !formData.dateLost || !formData.contact) {
+            alert("Please fill all the fields before reporting.");
+            return;
+        }
+
+        // 2. දුරකථන අංක Validation එක (ඉලක්කම් 10)
+        if (formData.contact.length !== 10) {
+            alert("Please enter a valid 10-digit contact number.");
+            return;
+        }
+
+        try {
+            await axios.post('http://localhost:5001/api/lost-items/add', formData);
+            alert("Item Reported Successfully! 🎉");
+            navigate('/items');
+        } catch (err) { alert("Failed to submit."); }
+    };
+
+    return (
+        <div style={pageBackgroundStyle}>
+            <div style={fullOverlayStyle} />
+            <div style={formContainerStyle}>
+                <h1 style={{ textAlign: 'center', color: '#003366', marginBottom: '5px' }}>🎓 REPORT LOST ITEM</h1>
+                <p style={{ textAlign: 'center', color: '#666', marginBottom: '25px', fontSize: '14px' }}>Lost Something? We are here to help you</p>
+                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '15px' }}>
+                    <input type="text" placeholder="Item Name" value={formData.itemName} onChange={(e) => setFormData({ ...formData, itemName: e.target.value })} required style={inputStyle} />
+                    <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required style={inputStyle}>
+                        <option value="">Select Category</option>
+                        <option value="Student ID / Documents">Student ID / Documents</option>
+                        <option value="Electronics (Laptop/Phone)">Electronics (Laptop/Phone)</option>
+                        <option value="Books / Stationery">Books / Stationery</option>
+                    </select>
+                    <textarea placeholder="Description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required style={{ ...inputStyle, height: '80px', resize: 'none' }} />
+                    <input type="text" placeholder="Location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required style={inputStyle} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555' }}>Date it was lost:</label>
+                        <input type="date" max={today} value={formData.dateLost} onChange={(e) => setFormData({ ...formData, dateLost: e.target.value })} required style={inputStyle} />
+                    </div>
+                    <input type="tel" placeholder="Contact Number (10 Digits)" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} required style={inputStyle} />
+                    <button type="submit" style={btnStyle}>Report Item</button>
+                </form>
+                <Link to="/items" style={{ display: 'block', textAlign: 'center', marginTop: '20px', color: '#003366', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>View All Reported Items →</Link>
+            </div>
+        </div>
+    );
+}
+
+// --- 2. List Page (Update Validation - No Empty Fields) ---
+function ListPage() {
+    const [items, setItems] = useState([]);
+    const [editingId, setEditingId] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
+
+    const fetchItems = async () => {
+        try {
+            const res = await axios.get('http://localhost:5001/api/lost-items/all');
+            setItems(Array.isArray(res.data) ? res.data : []);
+        } catch (err) { console.error(err); }
+    };
+
+    useEffect(() => { fetchItems(); }, []);
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure?")) {
+            try {
+                await axios.delete(`http://localhost:5001/api/lost-items/delete/${id}`);
+                fetchItems();
+            } catch (err) { alert("Delete failed"); }
+        }
+    };
+
+    const handleUpdate = async (id) => {
+        // 1. Update කිරීමේදී කිසිම Field එකක් හිස්ව තිබිය නොහැක
+        if (!editFormData.itemName || !editFormData.description || !editFormData.location || !editFormData.contact) {
+            alert("Fields cannot be empty. Please fill in all details before saving.");
+            return;
+        }
+
+        // 2. දුරකථන අංක Validation එක (ඉලක්කම් 10)
+        if (editFormData.contact.length !== 10) {
+            alert("Please enter a valid 10-digit contact number.");
+            return;
+        }
+
+        try {
+            await axios.put(`http://localhost:5001/api/lost-items/update/${id}`, editFormData);
+            setEditingId(null);
+            fetchItems();
+        } catch (err) { alert("Update failed"); }
+    };
+
+    return (
+        <div style={pageBackgroundStyle}>
+            <div style={fullOverlayStyle} />
+            <div style={{ position: 'relative', width: '100%', padding: '40px', zIndex: 1 }}>
+                <Link to="/" style={{ color: '#003366', fontWeight: 'bold', textDecoration: 'none', marginBottom: '20px', display: 'inline-block' }}>
+                    ← Back to Form
+                </Link>
+                <h2 style={{ textAlign: 'center', color: '#000', fontSize: '32px', fontWeight: 'bold', marginBottom: '40px' }}>
+                    Recent Reported Items
+                </h2>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '25px' }}>
+                    {items.map(item => (
+                        <div key={item._id} style={cardStyle}>
+                            {editingId === item._id ? (
+                                // Edit Mode
+                                <div style={{ display: 'grid', gap: '6px', height: '100%', overflowY: 'auto' }}>
+                                    <input style={smallInput} value={editFormData.itemName} onChange={(e) => setEditFormData({ ...editFormData, itemName: e.target.value })} required />
+                                    <select style={smallInput} value={editFormData.category} onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })} required>
+                                        <option value="Student ID / Documents">Student ID / Documents</option>
+                                        <option value="Electronics (Laptop/Phone)">Electronics (Laptop/Phone)</option>
+                                        <option value="Books / Stationery">Books / Stationery</option>
+                                    </select>
+                                    <textarea style={{ ...smallInput, height: '50px' }} value={editFormData.description} onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })} required />
+                                    <input style={smallInput} value={editFormData.location} onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })} required />
+                                    <input style={smallInput} value={editFormData.contact} onChange={(e) => setEditFormData({ ...editFormData, contact: e.target.value })} required />
+                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                        <button onClick={() => handleUpdate(item._id)} style={{ ...actionBtn, backgroundColor: '#27ae60' }}>Save</button>
+                                        <button onClick={() => setEditingId(null)} style={{ ...actionBtn, backgroundColor: '#95a5a6' }}>Cancel</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    <div style={{ flex: 1, overflowY: 'auto', marginBottom: '10px' }}>
+                                        <span style={badgeStyle}>{item.category}</span>
+                                        <h4 style={{ margin: '10px 0 5px 0', color: '#333' }}>{item.itemName}</h4>
+                                        <p style={{ fontSize: '13px', color: '#e67e22' }}>📍 {item.location}</p>
+                                        <p style={{ fontSize: '12px', color: '#666' }}>{item.description}</p>
+                                    </div>
+                                    <div style={{ borderTop: '1px solid #eee', paddingTop: '10px' }}>
+                                        <p style={{ fontSize: '12px', fontWeight: 'bold' }}>📞 {item.contact}</p>
+                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                            <button onClick={() => { setEditingId(item._id); setEditFormData(item); }} style={{ ...actionBtn, backgroundColor: '#f39c12' }}>Edit</button>
+                                            <button onClick={() => handleDelete(item._id)} style={{ ...actionBtn, backgroundColor: '#e74c3c' }}>Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// --- Styles ---
+const pageBackgroundStyle = { backgroundImage: `url(${campusBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Segoe UI', sans-serif" };
+const fullOverlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.4)', zIndex: 0 };
+const formContainerStyle = { position: 'relative', maxWidth: '500px', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', margin: '20px', zIndex: 1 };
+const cardStyle = { backgroundColor: 'white', padding: '15px', borderRadius: '12px', width: '280px', height: '320px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' };
+const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' };
+const btnStyle = { padding: '14px', borderRadius: '8px', border: 'none', backgroundColor: '#003366', color: 'white', fontWeight: 'bold', cursor: 'pointer' };
+const badgeStyle = { backgroundColor: '#e1f5fe', color: '#01579b', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' };
+const actionBtn = { border: 'none', color: 'white', padding: '8px', borderRadius: '5px', cursor: 'pointer', flex: 1, fontSize: '12px', fontWeight: 'bold' };
+const smallInput = { padding: '6px', borderRadius: '5px', border: '1px solid #ddd', fontSize: '12px', width: '100%' };
+
+export default function App() {
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<FormPage />} />
+                <Route path="/items" element={<ListPage />} />
+            </Routes>
+        </Router>
+    );
+}

@@ -72,8 +72,7 @@ function OtpPage({ onTogglePage, email }) {
       });
       const data = await response.json();
       if (response.ok) {
-        alert('OTP verified successfully');
-        onTogglePage && onTogglePage('login');
+        onTogglePage && onTogglePage('matching');
       } else {
         alert(data.message || 'Invalid OTP');
       }
