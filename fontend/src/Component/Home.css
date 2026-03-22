@@ -337,33 +337,31 @@
 
 .nav-notify-badge {
   position: absolute;
-  top: -2px;
-  right: -6px;
+  top: -4px;
+  right: -10px;
   z-index: 2;
-  min-width: 1.25rem;
-  min-height: 1.25rem;
-  padding: 0 5px;
+  min-width: 1.4rem;
+  min-height: 1.1rem;
+  padding: 0 6px;
   font-size: 0.72rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #fff;
-  background: #dc2626;
+  background: #4b5563; /* Dark gray pill background */
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  box-shadow: 0 0 0 2px #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .nav-notify-badge--unread {
-  background: #dc2626;
-  color: #fff;
+  background: #4b5563; /* Keep gray consistent with total */
 }
 
 .nav-notify-badge--total {
-  background: #64748b;
-  color: #fff;
+  background: #4b5563;
 }
 
 .nav-notify-panel {
