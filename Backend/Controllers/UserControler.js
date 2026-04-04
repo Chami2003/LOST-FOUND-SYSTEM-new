@@ -1,5 +1,9 @@
 const User = require("../Model/UserModel");
 const nodemailer = require('nodemailer');
+const { ADMIN_EMAIL } = require("../utils/ensureAdminUser");
+
+/** Placeholder until user finishes registration after OTP (send-otp creates minimal user). */
+const PENDING_REGISTRATION_PASSWORD = '__PENDING_OTP__';
 
 const getAllUsers = async (req, res, next) => {
     let users;
@@ -10,13 +14,13 @@ const getAllUsers = async (req, res, next) => {
         return res.status(500).json({ message: "An error occurred during DB fetch." });
     }
 
-    //not found
-    if (!users || users.length === 0) {
-        return res.status(404).json({ message: "No users found" });
-    }
-
-    //display all user
-    return res.status(200).json({ users });
+    const list = users && users.length > 0 ? users : [];
+    const safe = list.map((u) => {
+        const o = u.toObject ? u.toObject() : { ...u };
+        delete o.password;
+        return o;
+    });
+    return res.status(200).json({ users: safe });
 };
 //data insert
 const addUsers = async (req, res, next) => {
@@ -29,6 +33,13 @@ const addUsers = async (req, res, next) => {
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+            if (existingUser.password === PENDING_REGISTRATION_PASSWORD) {
+                existingUser.name = name || email.split('@')[0];
+                existingUser.phone = phone || undefined;
+                existingUser.password = password;
+                await existingUser.save();
+                return res.status(201).json({ user: existingUser });
+            }
             return res.status(400).json({ message: "Email already registered" });
         }
     } catch (err) {
@@ -61,12 +72,24 @@ const loginUser = async (req, res, next) => {
         return res.status(400).json({ message: "Email and password are required" });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     try {
-        const user = await User.findOne({ email, password });
+        const user = await User.findOne({ email: normalizedEmail, password });
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
-        return res.status(200).json({ message: "Login valid", user });
+        if (user.password === PENDING_REGISTRATION_PASSWORD) {
+            return res.status(401).json({ message: "Finish creating your account after OTP verification." });
+        }
+        user.lastLoginAt = new Date();
+        await user.save();
+        const safeUser = user.toObject();
+        delete safeUser.password;
+        if (safeUser.role == null || safeUser.role === '') {
+            safeUser.role = normalizedEmail === ADMIN_EMAIL ? 'admin' : 'user';
+        }
+        return res.status(200).json({ message: "Login valid", user: safeUser });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "An error occurred during login." });
@@ -132,14 +155,20 @@ const sendOtp = async (req, res, next) => {
             return res.status(404).json({ message: "No account found with this email" });
         }
         if (!user) {
-            user = new User({ email, otp, otpExpiry });
+            user = new User({
+                email,
+                name: String(email).split('@')[0] || 'User',
+                password: PENDING_REGISTRATION_PASSWORD,
+                otp,
+                otpExpiry,
+            });
         } else {
             user.otp = otp;
             user.otpExpiry = otpExpiry;
         }
         await user.save();
 
-        // Send email (skip if no real credentials - OTP is saved, check console for testing)
+        // Send email (skip if no real credentials - OTP is saved for dev testing)
         const emailUser = process.env.EMAIL_USER || 'your-email@gmail.com';
         const emailPass = process.env.EMAIL_PASS || 'your-password';
 
@@ -149,7 +178,11 @@ const sendOtp = async (req, res, next) => {
             console.log(`Email: ${email}`);
             console.log(`OTP: ${otp}`);
             console.log('--- Use this OTP on the OTP page ---\n');
-            return res.status(200).json({ message: "OTP sent successfully" });
+            return res.status(200).json({
+                message: "Email service is not configured. Use the OTP shown in backend console for testing.",
+                emailConfigured: false,
+                devOtp: otp
+            });
         }
 
         const transporter = nodemailer.createTransport({
@@ -164,11 +197,20 @@ const sendOtp = async (req, res, next) => {
             text: `Your OTP is ${otp}. It expires in 2 minutes.`
         });
 
-        return res.status(200).json({ message: "OTP sent successfully" });
+        return res.status(200).json({
+            message: "OTP sent successfully",
+            emailConfigured: true
+        });
 
     } catch (err) {
         console.log(err);
-        return res.status(500).json({ message: "An error occurred" });
+        const errorText = String(err?.message || '');
+        if (errorText.includes('Invalid login') || errorText.includes('Username and Password not accepted')) {
+            return res.status(500).json({
+                message: "Failed to send OTP email: Gmail authentication failed. Check EMAIL_USER and EMAIL_PASS (App Password)."
+            });
+        }
+        return res.status(500).json({ message: "An error occurred while sending OTP email." });
     }
 }
 
@@ -206,8 +248,10 @@ const verifyOtp = async (req, res, next) => {
         return res.status(400).json({ message: "Email and OTP are required" });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user || user.otp !== otp || user.otpExpiry < new Date()) {
             return res.status(400).json({ message: "Invalid or expired OTP" });
         }
@@ -215,6 +259,7 @@ const verifyOtp = async (req, res, next) => {
         // OTP verified, clear OTP
         user.otp = undefined;
         user.otpExpiry = undefined;
+        user.lastLoginAt = new Date();
         await user.save();
 
         return res.status(200).json({ message: "OTP verified successfully" });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react-router-dom';
+import { API_PREFIX } from '../apiConfig';
 
 // Campus background photo
 import campusBg from './campus.jpg';
@@ -29,7 +30,7 @@ function FormPage() {
         }
 
         try {
-            await axios.post('http://localhost:5001/api/lost-items/add', formData);
+            await axios.post(`${API_PREFIX}/lost-items/add`, formData);
             alert("Item Reported Successfully! 🎉");
             navigate('/items');
         } catch (err) { alert("Failed to submit."); }
@@ -55,7 +56,7 @@ function FormPage() {
                         <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555' }}>Date it was lost:</label>
                         <input type="date" max={today} value={formData.dateLost} onChange={(e) => setFormData({ ...formData, dateLost: e.target.value })} required style={inputStyle} />
                     </div>
-                    <input type="tel" placeholder="Contact Number (10 Digits)" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} required style={inputStyle} />
+                    <input type="tel" placeholder="Contact Number (10 Digits)" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value.replace(/\D/g, '').slice(0, 10) })} required style={inputStyle} pattern="[0-9]*" inputMode="numeric" />
                     <button type="submit" style={btnStyle}>Report Item</button>
                 </form>
                 <Link to="/items" style={{ display: 'block', textAlign: 'center', marginTop: '20px', color: '#003366', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>View All Reported Items →</Link>
@@ -72,7 +73,7 @@ function ListPage() {
 
     const fetchItems = async () => {
         try {
-            const res = await axios.get('http://localhost:5001/api/lost-items/all');
+            const res = await axios.get(`${API_PREFIX}/lost-items/all`);
             setItems(Array.isArray(res.data) ? res.data : []);
         } catch (err) { console.error(err); }
     };
@@ -82,7 +83,7 @@ function ListPage() {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure?")) {
             try {
-                await axios.delete(`http://localhost:5001/api/lost-items/delete/${id}`);
+                await axios.delete(`${API_PREFIX}/lost-items/delete/${id}`);
                 fetchItems();
             } catch (err) { alert("Delete failed"); }
         }
@@ -102,7 +103,7 @@ function ListPage() {
         }
 
         try {
-            await axios.put(`http://localhost:5001/api/lost-items/update/${id}`, editFormData);
+            await axios.put(`${API_PREFIX}/lost-items/update/${id}`, editFormData);
             setEditingId(null);
             fetchItems();
         } catch (err) { alert("Update failed"); }
@@ -133,7 +134,7 @@ function ListPage() {
                                     </select>
                                     <textarea style={{ ...smallInput, height: '50px' }} value={editFormData.description} onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })} required />
                                     <input style={smallInput} value={editFormData.location} onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })} required />
-                                    <input style={smallInput} value={editFormData.contact} onChange={(e) => setEditFormData({ ...editFormData, contact: e.target.value })} required />
+                                    <input style={smallInput} value={editFormData.contact} onChange={(e) => setEditFormData({ ...editFormData, contact: e.target.value.replace(/\D/g, '').slice(0, 10) })} required pattern="[0-9]*" inputMode="numeric" />
                                     <div style={{ display: 'flex', gap: '5px' }}>
                                         <button onClick={() => handleUpdate(item._id)} style={{ ...actionBtn, backgroundColor: '#27ae60' }}>Save</button>
                                         <button onClick={() => setEditingId(null)} style={{ ...actionBtn, backgroundColor: '#95a5a6' }}>Cancel</button>

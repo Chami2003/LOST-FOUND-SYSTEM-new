@@ -9,5 +9,6 @@ router.get("/all", lostItemController.getAllLostItems);
 // update and delete
 router.put("/update/:id", lostItemController.updateLostItem);
 router.delete("/delete/:id", lostItemController.deleteLostItem);
+router.get("/my-reports/:userId", lostItemController.getMyReports);
 
 module.exports = router;

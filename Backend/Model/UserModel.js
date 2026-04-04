@@ -24,7 +24,15 @@ const userSchema = new Schema({
     },
     otpExpiry: {
         type: Date
-    }
+    },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user',
+    },
+    lastLoginAt: {
+        type: Date,
+    },
 }, {
     collection: 'User_Management',
     timestamps: true   // createdAt & updatedAt auto add 

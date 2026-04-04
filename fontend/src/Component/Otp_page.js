@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import '../App.css';
 import AuthLayout from './AuthLayout';
+import { apiUrl } from '../apiConfig';
 
 const OTP_DURATION_SECONDS = 2 * 60; // 2 minutes
 
-function OtpPage({ onTogglePage, email }) {
+function OtpPage({ onTogglePage, onAuthSuccess, email }) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timeLeft, setTimeLeft] = useState(OTP_DURATION_SECONDS);
   const [resending, setResending] = useState(false);
@@ -13,7 +14,7 @@ function OtpPage({ onTogglePage, email }) {
     if (!email || resending) return;
     setResending(true);
     try {
-      const res = await fetch('http://localhost:5001/users/send-otp', {
+      const res = await fetch(apiUrl('/users/send-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -22,7 +23,8 @@ function OtpPage({ onTogglePage, email }) {
       if (res.ok) {
         setTimeLeft(OTP_DURATION_SECONDS);
         setOtp(['', '', '', '', '', '']);
-        alert('New code sent! Check your email or backend console.');
+        const resendMsg = data?.message || 'New code sent!';
+        alert(resendMsg + (data?.devOtp ? `\nTest OTP: ${data.devOtp}` : ''));
       } else {
         alert(data.message || 'Failed to resend');
       }
@@ -63,7 +65,7 @@ function OtpPage({ onTogglePage, email }) {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5001/users/verify-otp', {
+      const response = await fetch(apiUrl('/users/verify-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +74,11 @@ function OtpPage({ onTogglePage, email }) {
       });
       const data = await response.json();
       if (response.ok) {
-        onTogglePage && onTogglePage('matching');
+        if (onAuthSuccess) {
+          onAuthSuccess('matching');
+        } else if (onTogglePage) {
+          onTogglePage('matching');
+        }
       } else {
         alert(data.message || 'Invalid OTP');
       }
@@ -105,6 +111,8 @@ function OtpPage({ onTogglePage, email }) {
               onChange={(e) => updateDigit(idx, e.target.value)}
               onFocus={(e) => e.target.select()}
               maxLength={1}
+              pattern="[0-9]*"
+              inputMode="numeric"
               style={{
                 width: 52,
                 height: 64,

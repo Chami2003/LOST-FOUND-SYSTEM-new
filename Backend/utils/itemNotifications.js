@@ -18,4 +18,13 @@ async function notifyNewFoundItem(item) {
   });
 }
 
-module.exports = { notifyNewLostItem, notifyNewFoundItem };
+async function notifyExpiredItem(itemType, item) {
+  await Notification.create({
+    type: "admin",
+    message: `Expired unclaimed ${itemType} item after 30 days: ${item.itemName}`,
+    itemName: item.itemName,
+    itemId: item._id,
+  });
+}
+
+module.exports = { notifyNewLostItem, notifyNewFoundItem, notifyExpiredItem };

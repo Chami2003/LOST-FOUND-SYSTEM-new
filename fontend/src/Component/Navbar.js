@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Home.css';
-
-const API_PREFIX = process.env.REACT_APP_API_BASE
-  ? `${String(process.env.REACT_APP_API_BASE).replace(/\/$/, '')}/api`
-  : 'http://localhost:5001/api';
+import { API_PREFIX } from '../apiConfig';
 
 function IconHome({ active }) {
   if (active) {
@@ -85,7 +82,15 @@ function IconSmartMatch({ active }) {
   );
 }
 
-function Navbar({ onTogglePage, activePage = 'home', searchValue = '', onSearchChange, activeCategory = '', onCategoryChange }) {
+function Navbar({
+  onTogglePage,
+  activePage = 'home',
+  searchValue = '',
+  onSearchChange,
+  activeCategory = '',
+  onCategoryChange,
+  isAuthenticated = false,
+}) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifyLoaded, setNotifyLoaded] = useState(false);
@@ -132,13 +137,47 @@ function Navbar({ onTogglePage, activePage = 'home', searchValue = '', onSearchC
       await fetch(`${API_PREFIX}/notifications/mark-read`, { method: 'POST' });
       await loadNotifications();
     } catch {
-      /* ignore */
+
     }
   };
 
   const showUnreadBadge = unreadCount > 0;
   const badgeNumber = showUnreadBadge ? unreadCount : notifications.length;
   const badgeDisplay = badgeNumber > 99 ? '99+' : String(badgeNumber);
+  const notifyTypeLabel = (type) => {
+    if (type === 'lost') return 'Lost';
+    if (type === 'found') return 'Found';
+    return 'Admin';
+  };
+  const requireLogin = () => {
+    if (isAuthenticated) return true;
+    alert('Please login first');
+    onTogglePage?.('login');
+    return false;
+  };
+
+  const categoryAppliesHere = activePage === 'home' || activePage === 'matching';
+  const categoryPillActive = Boolean(activeCategory) && categoryAppliesHere;
+  const categoryPillLabel = categoryAppliesHere ? activeCategory || 'Categories' : 'Categories';
+
+  if (!isAuthenticated) {
+    return (
+      <nav className="home-navbar home-navbar--guest">
+        <div className="home-brand">
+          <img src="/image.png" alt="" className="home-logo-icon" />
+          <span className="home-logo-text">iLost</span>
+        </div>
+        <div className="guest-nav-actions">
+          <button type="button" className="guest-login-btn" onClick={() => onTogglePage?.('login')}>
+            Log In
+          </button>
+          <button type="button" className="guest-start-btn" onClick={() => onTogglePage?.('create')}>
+            Create Account
+          </button>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="home-navbar">
@@ -165,43 +204,66 @@ function Navbar({ onTogglePage, activePage = 'home', searchValue = '', onSearchC
                 role="tab"
                 aria-selected={activePage === 'matching'}
                 className={`nav-pill ${activePage === 'matching' ? 'nav-pill--active' : ''}`}
-                onClick={() => onTogglePage('matching')}
+                onClick={() => {
+                  if (requireLogin()) onTogglePage?.('matching');
+                }}
               >
                 <span className="nav-pill-label">Smart match</span>
               </button>
 
-              <button type="button" className="nav-pill" onClick={() => alert('Report Item View')}>
+              <button
+                type="button"
+                className="nav-pill"
+                onClick={() => {
+                  if (requireLogin()) onTogglePage?.('report');
+                }}
+              >
                 <span className="nav-pill-label">Report Item</span>
+              </button>
+              <button
+                type="button"
+                className={`nav-pill ${activePage === 'auction' ? 'nav-pill--active' : ''}`}
+                onClick={() => {
+                  if (requireLogin()) onTogglePage?.('auction');
+                }}
+              >
+                <span className="nav-pill-label">Auction</span>
               </button>
 
               <div className="dropdown nav-pill-dropdown">
-                <button type="button" className={`nav-pill ${activeCategory ? 'nav-pill--active' : ''}`}>
-                  <span className="nav-pill-label">{activeCategory || 'Categories'}</span>
+                <button type="button" className={`nav-pill ${categoryPillActive ? 'nav-pill--active' : ''}`}>
+                  <span className="nav-pill-label">{categoryPillLabel}</span>
                 </button>
                 <div className="dropdown-content">
-                  <span className={!activeCategory ? 'active' : ''} onClick={() => onCategoryChange?.('')}>
+                  <span className={categoryAppliesHere && !activeCategory ? 'active' : ''} onClick={() => onCategoryChange?.('')}>
                     All Categories
                   </span>
-                  <span className={activeCategory === 'Electronics' ? 'active' : ''} onClick={() => onCategoryChange?.('Electronics')}>
+                  <span className={categoryAppliesHere && activeCategory === 'Electronics' ? 'active' : ''} onClick={() => onCategoryChange?.('Electronics')}>
                     Electronics
                   </span>
-                  <span className={activeCategory === 'Documents' ? 'active' : ''} onClick={() => onCategoryChange?.('Documents')}>
+                  <span className={categoryAppliesHere && activeCategory === 'Documents' ? 'active' : ''} onClick={() => onCategoryChange?.('Documents')}>
                     Documents
                   </span>
-                  <span className={activeCategory === 'Clothes' ? 'active' : ''} onClick={() => onCategoryChange?.('Clothes')}>
+                  <span className={categoryAppliesHere && activeCategory === 'Clothes' ? 'active' : ''} onClick={() => onCategoryChange?.('Clothes')}>
                     Clothes
                   </span>
-                  <span className={activeCategory === 'Accessories' ? 'active' : ''} onClick={() => onCategoryChange?.('Accessories')}>
+                  <span className={categoryAppliesHere && activeCategory === 'Accessories' ? 'active' : ''} onClick={() => onCategoryChange?.('Accessories')}>
                     Accessories
                   </span>
-                  <span className={activeCategory === 'Others' ? 'active' : ''} onClick={() => onCategoryChange?.('Others')}>
+                  <span className={categoryAppliesHere && activeCategory === 'Others' ? 'active' : ''} onClick={() => onCategoryChange?.('Others')}>
                     Others
                   </span>
                 </div>
               </div>
             </div>
 
-            <button type="button" className="nav-pill nav-pill--help" onClick={() => alert('Help / Support')}>
+            <button
+              type="button"
+              className={`nav-pill nav-pill--help ${activePage === 'help' ? 'nav-pill--active' : ''}`}
+              onClick={() => {
+                if (requireLogin()) onTogglePage?.('help');
+              }}
+            >
               <span className="nav-pill-label">Help</span>
             </button>
           </div>
@@ -265,7 +327,7 @@ function Navbar({ onTogglePage, activePage = 'home', searchValue = '', onSearchC
                       key={n._id}
                       className={`nav-notify-item ${n.read ? 'nav-notify-item--read' : ''}`}
                     >
-                      <span className={`nav-notify-tag nav-notify-tag--${n.type}`}>{n.type === 'lost' ? 'Lost' : 'Found'}</span>
+                      <span className={`nav-notify-tag nav-notify-tag--${n.type}`}>{notifyTypeLabel(n.type)}</span>
                       <p className="nav-notify-msg">{n.message}</p>
                       <time className="nav-notify-time">
                         {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
@@ -279,19 +341,25 @@ function Navbar({ onTogglePage, activePage = 'home', searchValue = '', onSearchC
         </li>
 
         <li className="nav-item dropdown">
-          <button type="button" className="nav-link nav-link-icon-only" aria-label="My account" title="My account">
+          <button
+            type="button"
+            className="nav-link nav-link-icon-only"
+            aria-label="My account"
+            title="My account"
+            onClick={() => onTogglePage?.('profile')}
+          >
             <span style={{ fontSize: '1.4rem' }}>👤</span>
           </button>
           <div className="dropdown-content dropdown-content--align-end">
-            <span>My Reported Items</span>
-            <span>My Claims</span>
+            <span onClick={() => onTogglePage?.('report-items')}>My Reported Items</span>
+            <span onClick={() => onTogglePage?.('claims')}>My Claims</span>
             <span onClick={() => onTogglePage('update')}>Edit Profile</span>
-            <span 
+            <span
               onClick={() => {
                 if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
                   alert('Account deletion requested. (Backend integration pending)');
                 }
-              }} 
+              }}
               style={{ color: '#ef4444', fontWeight: '500' }}
             >
               Delete Account
@@ -301,13 +369,6 @@ function Navbar({ onTogglePage, activePage = 'home', searchValue = '', onSearchC
         </li>
       </ul>
 
-      {activePage === 'home' ? (
-        <div className="home-nav-actions">
-          <button type="button" onClick={() => onTogglePage('login')} className="nav-login-btn">
-            Log In
-          </button>
-        </div>
-      ) : null}
     </nav>
   );
 }

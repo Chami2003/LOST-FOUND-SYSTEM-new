@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../App.css';
 import AuthLayout from './AuthLayout';
+import { apiUrl } from '../apiConfig';
 
 const EyeIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -31,7 +32,7 @@ function UpdatePage({ onTogglePage, setCurrentEmail }) {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5001/users/send-otp', {
+      const response = await fetch(apiUrl('/users/send-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, forgotPassword: true }),
@@ -60,7 +61,7 @@ function UpdatePage({ onTogglePage, setCurrentEmail }) {
       return;
     }
     try {
-      const response = await fetch('http://localhost:5001/users/update-password', {
+      const response = await fetch(apiUrl('/users/update-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, newPassword }),
@@ -115,6 +116,8 @@ function UpdatePage({ onTogglePage, setCurrentEmail }) {
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="Enter 6-digit OTP"
                 maxLength={6}
+                pattern="[0-9]*"
+                inputMode="numeric"
               />
             </div>
 

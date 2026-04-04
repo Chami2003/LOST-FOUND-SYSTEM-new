@@ -13,10 +13,10 @@
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "Backend/app.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./node_modules/nodemon/bin/nodemon.js Backend/app.js"
+    "start": "node \"../node_modules/nodemon/bin/nodemon.js\" app.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

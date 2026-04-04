@@ -1,9 +1,21 @@
+const mongoose = require("mongoose");
 const LostItem = require("../Model/LostItem");
+const Notification = require("../Model/Notification");
 const { notifyNewLostItem } = require("../utils/itemNotifications");
+
+function normalizeImages(body) {
+    const imageUrls = Array.isArray(body.imageUrls)
+        ? body.imageUrls.map((x) => String(x || "").trim()).filter(Boolean)
+        : [];
+    const imageUrl = String(body.imageUrl || "").trim();
+    if (!imageUrls.length && imageUrl) imageUrls.push(imageUrl);
+    return { ...body, imageUrl: imageUrls[0] || imageUrl || "", imageUrls };
+}
 
 const addLostItem = async (req, res) => {
     try {
-        const newItem = new LostItem(req.body);
+        const itemData = normalizeImages(req.body);
+        const newItem = new LostItem(itemData);
         await newItem.save();
         try {
             await notifyNewLostItem(newItem);
@@ -27,7 +39,7 @@ const getAllLostItems = async (req, res) => {
 
 const updateLostItem = async (req, res) => {
     try {
-        const updatedItem = await LostItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const updatedItem = await LostItem.findByIdAndUpdate(req.params.id, normalizeImages(req.body), { new: true });
         res.status(200).json({ message: "Lost item updated successfully!", item: updatedItem });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -36,8 +48,22 @@ const updateLostItem = async (req, res) => {
 
 const deleteLostItem = async (req, res) => {
     try {
-        await LostItem.findByIdAndDelete(req.params.id);
+        const id = req.params.id;
+        await LostItem.findByIdAndDelete(id);
+        if (mongoose.Types.ObjectId.isValid(id)) {
+            await Notification.deleteMany({ itemId: new mongoose.Types.ObjectId(id) });
+        }
         res.status(200).json({ message: "Lost item deleted successfully!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const getMyReports = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const items = await LostItem.find({ reportedBy: userId });
+        res.status(200).json(items);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -48,4 +74,5 @@ module.exports = {
     getAllLostItems,
     updateLostItem,
     deleteLostItem,
+    getMyReports,
 };

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema(
   {
-    type: { type: String, enum: ["lost", "found"], required: true },
+    type: { type: String, enum: ["lost", "found", "admin"], required: true },
     message: { type: String, required: true },
     itemName: { type: String },
     itemId: { type: mongoose.Schema.Types.ObjectId },

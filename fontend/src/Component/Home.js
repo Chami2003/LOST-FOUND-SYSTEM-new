@@ -39,7 +39,7 @@ function FadeInSection(props) {
   );
 }
 
-function Home({ onTogglePage, navSearch = '', onNavSearchChange, navCategory = '', onNavCategoryChange }) {
+function Home({ onTogglePage, isAuthenticated = false, navSearch = '', onNavSearchChange, navCategory = '', onNavCategoryChange }) {
   const searchQ = String(navSearch || '').trim();
   const filtering = Boolean(searchQ);
 
@@ -81,6 +81,7 @@ function Home({ onTogglePage, navSearch = '', onNavSearchChange, navCategory = '
       {/* Navigation Bar */}
       <Navbar
         onTogglePage={onTogglePage}
+        isAuthenticated={isAuthenticated}
         activePage="home"
         searchValue={navSearch}
         onSearchChange={onNavSearchChange}
@@ -108,7 +109,7 @@ function Home({ onTogglePage, navSearch = '', onNavSearchChange, navCategory = '
             Streamline the entire lost and found process. Accurately track, match, verify, and return lost property with ease.
           </p>
           <div className="hero-actions">
-            <button onClick={() => onTogglePage('create')} className="hero-btn-primary">Start a Free Trial</button>
+            <button onClick={() => onTogglePage('create')} className="hero-btn-primary">Create Account</button>
             <button onClick={() => onTogglePage('login')} className="hero-btn-secondary">Request Demo</button>
           </div>
         </div>

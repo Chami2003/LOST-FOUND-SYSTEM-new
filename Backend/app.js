@@ -6,6 +6,9 @@ const router = require('./Route/UserRoute');
 const foundItemRoutes = require('./Route/FoundItemRoute');
 const lostItemRoutes = require('./Route/lostItemRoutes');
 const notificationRoutes = require('./Route/notificationRoutes');
+const auctionRoutes = require('./Route/auctionRoutes');
+const { startExpiryScheduler } = require('./utils/expiryScheduler');
+const { ensureAdminUser } = require('./utils/ensureAdminUser');
 
 const app = express();
 
@@ -16,6 +19,7 @@ app.use("/users", router);
 app.use("/api/found-items", foundItemRoutes);
 app.use("/api/lost-items", lostItemRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/auctions", auctionRoutes);
 
 const PORT = process.env.PORT || 5001;
 
@@ -28,5 +32,9 @@ mongoose
     .connect(
         "mongodb://admin:JODBgt9DODMBnSLV@ac-mi94ihy-shard-00-00.zxwd5yw.mongodb.net:27017,ac-mi94ihy-shard-00-01.zxwd5yw.mongodb.net:27017,ac-mi94ihy-shard-00-02.zxwd5yw.mongodb.net:27017/test?ssl=true&replicaSet=atlas-13fnl4-shard-0&authSource=admin&retryWrites=true&w=majority"
     )
-    .then(() => console.log("Connected to MongoDB (test.User_Management)"))
+    .then(async () => {
+        console.log("Connected to MongoDB (test.User_Management)");
+        await ensureAdminUser();
+        startExpiryScheduler();
+    })
     .catch((err) => console.error("MongoDB connection error:", err));

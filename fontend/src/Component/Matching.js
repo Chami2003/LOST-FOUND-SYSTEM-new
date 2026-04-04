@@ -2,15 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Navbar from './Navbar';
 import './Matching.css';
 import defaultItemImg from '../assets/lost_found_bg.png';
-
-/**
- * Call the Express API directly (backend has CORS enabled).
- * Using `/api` alone often returns the React index.html (DOCTYPE…), which breaks JSON.parse.
- * Set REACT_APP_API_BASE for production (e.g. https://api.yoursite.com).
- */
-const API_PREFIX = process.env.REACT_APP_API_BASE
-  ? `${String(process.env.REACT_APP_API_BASE).replace(/\/$/, '')}/api`
-  : 'http://localhost:5001/api';
+import { API_PREFIX } from '../apiConfig';
 
 async function parseJsonArrayResponse(res, label) {
   const text = await res.text();
@@ -28,13 +20,13 @@ async function parseJsonArrayResponse(res, label) {
   }
   return data;
 }
-const MESSAGE_THRESHOLD = 75;
+const MESSAGE_THRESHOLD = 70;
 
 function digitsOnly(raw) {
   return String(raw || '').replace(/\D/g, '');
 }
 
-/** WhatsApp wa.me expects country code + national number (no +), e.g. 94771234567 for LK mobile */
+/** WhatsApp */
 function toWhatsAppDigits(raw) {
   const d = digitsOnly(raw);
   if (!d) return '';
@@ -113,6 +105,10 @@ const PLACEHOLDER_BY_KEYWORD = [
 ];
 
 function resolveItemImage(item) {
+  if (Array.isArray(item?.imageUrls) && item.imageUrls.length) {
+    const first = String(item.imageUrls[0] || '').trim();
+    if (first) return first;
+  }
   const url = item?.imageUrl;
   if (typeof url === 'string' && url.trim()) return url.trim();
   const text = `${item?.category || ''} ${item?.itemName || ''} ${item?.description || ''}`;
@@ -210,7 +206,7 @@ function pairMatchesSearch(lost, found, query) {
   return blob.includes(q);
 }
 
-function Matching({ onTogglePage, navSearch = '', onNavSearchChange, navCategory = '', onNavCategoryChange }) {
+function Matching({ onTogglePage, isAuthenticated = false, currentUser, navSearch = '', onNavSearchChange, navCategory = '', onNavCategoryChange }) {
   const [lostItems, setLostItems] = useState([]);
   const [foundItems, setFoundItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -252,6 +248,30 @@ function Matching({ onTogglePage, navSearch = '', onNavSearchChange, navCategory
     load();
   }, [load]);
 
+  const handleClaim = async (foundItemId) => {
+    if (!isAuthenticated || !currentUser) {
+      alert('Please login to claim an item.');
+      onTogglePage('login');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to claim this item?')) return;
+
+    try {
+      const res = await fetch(`${API_PREFIX}/found-items/claim/${foundItemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser._id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to claim item.');
+      alert('Item claimed successfully! You can see it in "My Claims".');
+      load(); // Refresh lists
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const baseMatches = useMemo(
     () => buildMatches(lostItems, foundItems, minScore),
     [lostItems, foundItems, minScore]
@@ -280,6 +300,7 @@ function Matching({ onTogglePage, navSearch = '', onNavSearchChange, navCategory
     <div className="matching-page">
       <Navbar
         onTogglePage={onTogglePage}
+        isAuthenticated={isAuthenticated}
         activePage="matching"
         searchValue={navSearch}
         onSearchChange={onNavSearchChange}
@@ -383,6 +404,19 @@ function Matching({ onTogglePage, navSearch = '', onNavSearchChange, navCategory
                       <p className="matching-desc">{found.description}</p>
                       <p className="matching-meta">📍 {found.location}</p>
                       <p className="matching-meta">Found {formatDate(found.dateFound)} · 📞 {found.contact}</p>
+                      {found.claimed ? (
+                        <div style={{ marginTop: '0.75rem', display: 'inline-block', background: '#94a3b8', color: '#fff', padding: '4px 10px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 600 }}>
+                          CLAIMED
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="matching-claim-btn"
+                          onClick={() => handleClaim(found._id)}
+                        >
+                          Claim this item
+                        </button>
+                      )}
                     </div>
                   </div>
                   {score >= MESSAGE_THRESHOLD ? (

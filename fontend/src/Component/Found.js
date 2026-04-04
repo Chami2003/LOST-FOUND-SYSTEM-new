@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import './App.css';
+import { API_PREFIX } from '../apiConfig';
 // පින්තූරය මෙතැනින් import කරන්න
 import sliitCampusImg from './sliit-campus.jpg'; 
 
@@ -30,7 +31,7 @@ function App() {
 
   const fetchItems = async () => {
     try {
-      const response = await axios.get("http://localhost:5001/api/found-items/all");
+      const response = await axios.get(`${API_PREFIX}/found-items/all`);
       if (Array.isArray(response.data)) {
         setItems(response.data);
       }
@@ -46,7 +47,7 @@ function App() {
   const deleteItem = async (id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
-        await axios.delete(`http://localhost:5001/api/found-items/delete/${id}`);
+        await axios.delete(`${API_PREFIX}/found-items/delete/${id}`);
         alert("Item deleted successfully!");
         fetchItems();
       } catch (err) {
@@ -110,12 +111,12 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
 
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5001/api/found-items/update/${currentId}`, inputs);
+        await axios.put(`${API_PREFIX}/found-items/update/${currentId}`, inputs);
         alert("Item updated successfully!");
         setIsEditing(false);
         setCurrentId(null);
       } else {
-        await axios.post("http://localhost:5001/api/found-items/add", inputs);
+        await axios.post(`${API_PREFIX}/found-items/add`, inputs);
         alert("Item added successfully!");
       }
       setInputs({ itemName: '', description: '', category: '', location: '', dateFound: '', contact: '' });
@@ -139,7 +140,7 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
         <input name="location" value={inputs.location} placeholder="Location Found" onChange={handleChange} style={styles.input} required />
         <div style={{textAlign: 'left', fontSize: '12px', color: '#7f8c8d'}}>Date Found:</div>
         <input type="date" name="dateFound" value={inputs.dateFound} max={today} onChange={handleChange} style={styles.input} required />
-        <input name="contact" value={inputs.contact} placeholder="Contact Number" onChange={handleChange} style={styles.input} required maxLength="10" />
+        <input name="contact" value={inputs.contact} placeholder="Contact Number" onChange={(e) => setInputs({ ...inputs, contact: e.target.value.replace(/\D/g, '').slice(0, 10) })} style={styles.input} required maxLength="10" pattern="[0-9]*" inputMode="numeric" />
         <button type="submit" style={{ ...styles.button, backgroundColor: "#2c3e50" }}>
           {isEditing ? "Update Item" : "Submit Item"}
         </button>
