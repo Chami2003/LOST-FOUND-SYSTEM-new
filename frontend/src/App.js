@@ -5,7 +5,51 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react
 // Campus background photo
 import campusBg from './campus.jpg'; 
 
-// --- 1. NEW & ENHANCED LANDING PAGE (First Page) ---
+// --- Navbar Component (New addition based on your image) ---
+function Navbar() {
+  const navStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '10px 50px',
+    backgroundColor: 'white',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
+    fontFamily: "'Segoe UI', sans-serif"
+  };
+
+  const linkContainer = {
+    display: 'flex',
+    gap: '30px'
+  };
+
+  const linkStyle = {
+    textDecoration: 'none',
+    color: '#333',
+    fontWeight: '500',
+    fontSize: '15px'
+  };
+
+  return (
+    <nav style={navStyle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ backgroundColor: '#e67e22', color: 'white', padding: '5px 10px', borderRadius: '8px', fontWeight: 'bold' }}>🔍</div>
+        <span style={{ fontWeight: 'bold', color: '#003366', fontSize: '18px' }}>Lost & Found System</span>
+      </div>
+      <div style={linkContainer}>
+        <Link to="/" style={linkStyle}>Home</Link>
+        <Link to="/items" style={linkStyle}>Items List</Link>
+        {/* Navigating to Home/Landing page as requested */}
+        <Link to="/" style={{ ...linkStyle, color: '#e67e22', fontWeight: 'bold' }}>Report Item</Link>
+        <Link to="#" style={linkStyle}>About Us</Link>
+      </div>
+    </nav>
+  );
+}
+
+// --- 1. LANDING PAGE ---
 function LandingPage() {
   const navigate = useNavigate();
 
@@ -25,23 +69,13 @@ function LandingPage() {
   const overlayStyle = {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 26, 51, 0.7)', // Dark blue overlay for professional look
+    backgroundColor: 'rgba(0, 26, 51, 0.7)', 
     zIndex: 0
-  };
-
-  const headerStyle = {
-    zIndex: 1,
-    width: '100%',
-    padding: '20px 50px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    boxSizing: 'border-box'
   };
 
   const cardStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)', // Glass effect
+    backdropFilter: 'blur(10px)', 
     padding: '40px 30px',
     borderRadius: '20px',
     width: '320px',
@@ -60,16 +94,8 @@ function LandingPage() {
     <div style={containerStyle}>
       <div style={overlayStyle} />
       
-      {/* Top Navigation / Branding */}
-      <header style={headerStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ backgroundColor: '#e67e22', color: 'white', padding: '10px', borderRadius: '12px', fontWeight: 'bold', fontSize: '20px' }}>🔍</div>
-          <h2 style={{ color: '#e67e22' }}>Lost & Found System</h2>
-        </div>
-      </header>
-
       {/* Hero Section */}
-      <div style={{ zIndex: 1, textAlign: 'center', marginTop: '60px', padding: '0 20px' }}>
+      <div style={{ zIndex: 1, textAlign: 'center', marginTop: '100px', padding: '0 20px' }}>
         <h1 style={{ color: 'white', fontSize: '50px', fontWeight: '800', marginBottom: '15px', textShadow: '2px 2px 10px rgba(0,0,0,0.3)' }}>
           How can we help you today?
         </h1>
@@ -78,7 +104,6 @@ function LandingPage() {
         </p>
         
         <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          {/* Option 1: Lost Item */}
           <div 
             style={cardStyle} 
             onClick={() => navigate('/report-form')}
@@ -99,7 +124,6 @@ function LandingPage() {
             <button style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '30px', border: 'none', backgroundColor: '#e67e22', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>Report Lost</button>
           </div>
 
-          {/* Option 2: Found Item (Inactive for now as requested) */}
           <div style={{ ...cardStyle, opacity: 0.6, cursor: 'not-allowed' }}>
             <div style={{ backgroundColor: '#003366', color: 'white', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '35px', marginBottom: '20px', border: '2px solid #e67e22' }}>✓</div>
             <h3 style={{ color: 'white', marginBottom: '15px', fontSize: '24px' }}>I Found Something</h3>
@@ -109,7 +133,6 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* Info Stats (Visual enhancement only) */}
       <div style={{ zIndex: 1, display: 'flex', gap: '80px', marginTop: '80px', color: 'white' }}>
         <div style={{ textAlign: 'center' }}><h2 style={{ color: '#e67e22', margin: '0' }}>100+</h2><p style={{ fontSize: '14px', margin: '0' }}>Items Reported</p></div>
         <div style={{ textAlign: 'center' }}><h2 style={{ color: '#e67e22', margin: '0' }}>50+</h2><p style={{ fontSize: '14px', margin: '0' }}>Returned Successfully</p></div>
@@ -122,7 +145,7 @@ function LandingPage() {
   );
 }
 
-// --- 2. Form Page --
+// --- 2. Form Page ---
 function FormPage() {
   const [formData, setFormData] = useState({
     itemName: '', description: '', category: '', location: '', dateLost: '', contact: ''
@@ -177,7 +200,7 @@ function FormPage() {
   );
 }
 
-// --- 3. List Page  ---
+// --- 3. List Page ---
 function ListPage() {
   const [items, setItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -221,9 +244,6 @@ function ListPage() {
     <div style={pageBackgroundStyle}>
       <div style={fullOverlayStyle} />
       <div style={{ position: 'relative', width: '100%', padding: '40px', zIndex: 1 }}>
-        <Link to="/" style={{ color: '#003366', fontWeight: 'bold', textDecoration: 'none', marginBottom: '20px', display: 'inline-block' }}>
-          ← Back to Home
-        </Link>
         <h2 style={{ textAlign: 'center', color: '#003366', fontSize: '32px', fontWeight: 'bold', marginBottom: '40px' }}>
           Recent Reported Items
         </h2>
@@ -272,12 +292,12 @@ function ListPage() {
   );
 }
 
-// --- Existing Styles  ---
+// --- Styles ---
 const pageBackgroundStyle = { backgroundImage: `url(${campusBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: "'Segoe UI', sans-serif" };
 const fullOverlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.4)', zIndex: 0 };
 const formContainerStyle = { position: 'relative', maxWidth: '500px', width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', margin: '20px', zIndex: 1 };
 const cardStyleList = { backgroundColor: 'white', padding: '15px', borderRadius: '12px', width: '280px', height: '320px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' };
-const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' };
+const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px', width: '100%', boxSizing: 'border-box' };
 const btnStyle = { padding: '14px', borderRadius: '8px', border: 'none', backgroundColor: '#003366', color: 'white', fontWeight: 'bold', cursor: 'pointer' };
 const badgeStyle = { backgroundColor: '#e1f5fe', color: '#01579b', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' };
 const actionBtn = { border: 'none', color: 'white', padding: '8px', borderRadius: '5px', cursor: 'pointer', flex: 1, fontSize: '12px', fontWeight: 'bold' };
@@ -287,6 +307,7 @@ const smallInput = { padding: '6px', borderRadius: '5px', border: '1px solid #dd
 export default function App() {
   return (
     <Router>
+      <Navbar /> {/* Navbar displays on all pages */}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/report-form" element={<FormPage />} />
