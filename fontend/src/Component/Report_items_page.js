@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Navbar from './Navbar';
 import './Home.css';
 import { API_PREFIX } from '../apiConfig';
+import InteractiveMap from './InteractiveMap';
 
 function formatDate(value) {
   if (!value) return '—';
@@ -193,8 +194,15 @@ function ReportItemsPage({
           ) : rows.length === 0 ? (
             <p>No reports yet.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.9rem' }}>
-              {rows.map((item) => (
+            <>
+              <div style={{ marginBottom: '2rem' }}>
+                <h3 style={{ color: '#334155', marginBottom: '10px' }}>🗺️ Campus Map View</h3>
+                <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '1rem' }}>Click and hover over pins to see the items' general details. Red pins are lost, green pins are found.</p>
+                <InteractiveMap items={rows} readonly={true} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.9rem' }}>
+                {rows.map((item) => (
                 <article key={`${item.reportType}-${item._id}`} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.95rem' }}>
                   {firstImage(item) ? (
                     <img
@@ -283,7 +291,8 @@ function ReportItemsPage({
                   </div>
                 </article>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </main>

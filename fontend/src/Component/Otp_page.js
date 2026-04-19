@@ -74,10 +74,18 @@ function OtpPage({ onTogglePage, onAuthSuccess, email }) {
       });
       const data = await response.json();
       if (response.ok) {
+        const user = data.user;
         if (onAuthSuccess) {
-          onAuthSuccess('matching');
+          // If the verified user is an admin, they might need the admin view
+          if (user?.role === 'admin') {
+            // Check if there is a special onAdminLogin prop (usually in LoginPage context)
+            // But here we just complete auth and let the parent handle the role.
+            onAuthSuccess('admin', user); 
+          } else {
+            onAuthSuccess('matching', user);
+          }
         } else if (onTogglePage) {
-          onTogglePage('matching');
+          onTogglePage(user?.role === 'admin' ? 'admin' : 'matching');
         }
       } else {
         alert(data.message || 'Invalid OTP');

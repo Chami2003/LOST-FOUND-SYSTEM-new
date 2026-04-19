@@ -21,7 +21,7 @@ async function notifyNewFoundItem(item) {
 async function notifyExpiredItem(itemType, item) {
   await Notification.create({
     type: "admin",
-    message: `Expired unclaimed ${itemType} item after 30 days: ${item.itemName}`,
+    message: `Expired unclaimed ${itemType} item after 25 days: ${item.itemName}`,
     itemName: item.itemName,
     itemId: item._id,
   });

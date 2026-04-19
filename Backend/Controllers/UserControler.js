@@ -1,6 +1,7 @@
 const User = require("../Model/UserModel");
 const nodemailer = require('nodemailer');
 const { ADMIN_EMAIL } = require("../utils/ensureAdminUser");
+const { sendOtpEmail } = require("../utils/emailService");
 
 /** Placeholder until user finishes registration after OTP (send-otp creates minimal user). */
 const PENDING_REGISTRATION_PASSWORD = '__PENDING_OTP__';
@@ -168,49 +169,20 @@ const sendOtp = async (req, res, next) => {
         }
         await user.save();
 
-        // Send email (skip if no real credentials - OTP is saved for dev testing)
-        const emailUser = process.env.EMAIL_USER || 'your-email@gmail.com';
-        const emailPass = process.env.EMAIL_PASS || 'your-password';
-
-        if (emailUser === 'your-email@gmail.com' || !emailPass || emailPass === 'your-password') {
-            // Dev mode: no real email config - OTP saved to DB, log it for testing
-            console.log('\n--- OTP for testing ---');
-            console.log(`Email: ${email}`);
-            console.log(`OTP: ${otp}`);
-            console.log('--- Use this OTP on the OTP page ---\n');
-            return res.status(200).json({
-                message: "Email service is not configured. Use the OTP shown in backend console for testing.",
-                emailConfigured: false,
-                devOtp: otp
-            });
-        }
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user: emailUser, pass: emailPass }
-        });
-
-        await transporter.sendMail({
-            from: emailUser,
-            to: email,
-            subject: 'OTP for Account Verification',
-            text: `Your OTP is ${otp}. It expires in 2 minutes.`
-        });
+        // Send email using new service
+        const emailResult = await sendOtpEmail(email, otp);
 
         return res.status(200).json({
-            message: "OTP sent successfully",
-            emailConfigured: true
+            message: emailResult.devMode 
+                ? "Email service is not configured. Use the OTP shown in backend console for testing."
+                : "OTP sent successfully to your email.",
+            emailConfigured: !emailResult.devMode,
+            devOtp: emailResult.devMode ? otp : undefined
         });
 
     } catch (err) {
         console.log(err);
-        const errorText = String(err?.message || '');
-        if (errorText.includes('Invalid login') || errorText.includes('Username and Password not accepted')) {
-            return res.status(500).json({
-                message: "Failed to send OTP email: Gmail authentication failed. Check EMAIL_USER and EMAIL_PASS (App Password)."
-            });
-        }
-        return res.status(500).json({ message: "An error occurred while sending OTP email." });
+        return res.status(500).json({ message: err.message || "An error occurred while sending OTP email." });
     }
 }
 
@@ -262,7 +234,16 @@ const verifyOtp = async (req, res, next) => {
         user.lastLoginAt = new Date();
         await user.save();
 
-        return res.status(200).json({ message: "OTP verified successfully" });
+        const safeUser = user.toObject();
+        delete safeUser.password;
+        if (safeUser.role == null || safeUser.role === '') {
+            safeUser.role = normalizedEmail === ADMIN_EMAIL ? 'admin' : 'user';
+        }
+
+        return res.status(200).json({ 
+            message: "OTP verified successfully",
+            user: safeUser
+        });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "An error occurred" });

@@ -41,7 +41,8 @@ function UpdatePage({ onTogglePage, setCurrentEmail }) {
       if (response.ok) {
         setCurrentEmail && setCurrentEmail(email);
         setOtpSent(true);
-        alert('OTP sent! Check your email or the backend console for the code.');
+        const msg = data?.message || 'OTP sent!';
+        alert(msg + (data?.devOtp ? `\n\nTest OTP: ${data.devOtp}` : ''));
       } else {
         alert(data.message || 'Failed to send OTP');
       }

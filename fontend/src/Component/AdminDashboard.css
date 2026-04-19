@@ -95,6 +95,23 @@
   font-weight: 600;
 }
 
+.admin-sidebar-nav button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-nav-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 99px;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
 .admin-sidebar-footer {
   padding: 0.75rem 1rem;
   border-top: 1px solid rgba(148, 163, 184, 0.2);
@@ -334,6 +351,55 @@
   font-size: 0.82rem;
   color: #64748b;
   font-weight: 600;
+}
+
+.admin-overview-stat-card--urgent {
+  border-color: rgba(239, 68, 68, 0.2);
+  background: linear-gradient(135deg, #fff 0%, #fef2f2 100%);
+}
+
+.admin-overview-stat-card__icon--expired {
+  color: #ef4444;
+}
+
+.admin-overview-alert {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.admin-overview-alert__icon {
+  font-size: 1.25rem;
+}
+
+.admin-overview-alert__content {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.admin-overview-alert__btn {
+  padding: 0.5rem 1rem;
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin-overview-alert__btn:hover {
+  background: #1e293b;
 }
 
 .admin-overview-charts {
@@ -743,6 +809,37 @@
   cursor: not-allowed;
 }
 
+.admin-user-action-btn--wa {
+  background: #25d366;
+  border-color: #25d366;
+  color: #fff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-user-action-btn--wa:hover {
+  background: #22c35e;
+  border-color: #22c35e;
+  color: #fff;
+}
+
+.admin-user-action-btn--wa {
+  background: #25d366;
+  border-color: #25d366 !important;
+  color: #fff !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-user-action-btn--wa:hover {
+  background: #22c35e;
+  border-color: #22c35e !important;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+}
+
 .admin-qr-page {
   max-width: 1200px;
 }
@@ -859,9 +956,17 @@
   gap: 0.75rem;
 }
 
+.admin-qr-modal__actions-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .admin-qr-modal__score {
-  font-size: 0.9rem;
-  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-right: 0.5rem;
 }
 
 .admin-auction-admin .hint {
@@ -938,6 +1043,41 @@
 
 .admin-auction-closed p {
   margin: 0 0 0.35rem;
+}
+
+.admin-auction-closed__inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-auction-assign-note {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  color: #1e40af;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.admin-auction-cancel-edit {
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.admin-auction-cancel-edit:hover {
+  background: #f8fafc;
+  color: #334155;
 }
 
 .admin-auction-assign {

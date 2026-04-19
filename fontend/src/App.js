@@ -14,8 +14,9 @@ import AuctionPage from './Component/Auction_page';
 import HelpPage from './Component/Help_page';
 import AdminDashboard from './Component/AdminDashboard';
 import MyClaimsPage from './Component/My_claims_page';
+import CampusMapPage from './Component/CampusMap_page';
 
-const PUBLIC_PAGES = new Set(['home', 'login', 'create', 'otp', 'update']);
+const PUBLIC_PAGES = new Set(['home', 'login', 'create', 'otp', 'update', 'campus-map']);
 
 function App() {
   const [page, setPage] = useState('home');
@@ -39,9 +40,10 @@ function App() {
     setPage(nextPage);
   };
 
-  const handleAuthSuccess = (landingPage = 'matching') => {
+  const handleAuthSuccess = (landingPage = 'matching', userObj) => {
     setIsAuthenticated(true);
-    setPage(landingPage);
+    if (userObj) setCurrentUser(userObj);
+    setPage(landingPage === 'admin' ? 'admin-dashboard' : landingPage);
   };
 
   const renderPage = () => {
@@ -136,6 +138,18 @@ function App() {
             onTogglePage={handlePageChange}
             currentUser={currentUser}
             currentEmail={currentEmail}
+          />
+        );
+      case 'campus-map':
+        return (
+          <CampusMapPage
+            onTogglePage={handlePageChange}
+            isAuthenticated={isAuthenticated}
+            currentUser={currentUser}
+            navSearch={navSearch}
+            onNavSearchChange={setNavSearch}
+            navCategory={navCategory}
+            onNavCategoryChange={setNavCategory}
           />
         );
       case 'claims':

@@ -2,10 +2,10 @@ const LostItem = require("../Model/LostItem");
 const FoundItem = require("../Model/FoundItemModel");
 const { notifyExpiredItem } = require("./itemNotifications");
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const EXPIRY_DAYS_MS = 25 * 24 * 60 * 60 * 1000;
 
 function unclaimedFilter(now) {
-  const cutoff = new Date(now.getTime() - THIRTY_DAYS_MS);
+  const cutoff = new Date(now.getTime() - EXPIRY_DAYS_MS);
   return {
     $and: [
       { createdAt: { $lte: cutoff } },
@@ -20,7 +20,7 @@ async function expireLostItems(now) {
   for (const item of items) {
     item.status = "expired";
     item.expiredAt = now;
-    item.expiresAt = item.expiresAt || new Date(item.createdAt.getTime() + THIRTY_DAYS_MS);
+    item.expiresAt = item.expiresAt || new Date(item.createdAt.getTime() + EXPIRY_DAYS_MS);
     await item.save();
     await notifyExpiredItem("lost", item);
   }
@@ -32,7 +32,7 @@ async function expireFoundItems(now) {
   for (const item of items) {
     item.status = "expired";
     item.expiredAt = now;
-    item.expiresAt = item.expiresAt || new Date(item.createdAt.getTime() + THIRTY_DAYS_MS);
+    item.expiresAt = item.expiresAt || new Date(item.createdAt.getTime() + EXPIRY_DAYS_MS);
     await item.save();
     await notifyExpiredItem("found", item);
   }

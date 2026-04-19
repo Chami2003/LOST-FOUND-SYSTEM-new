@@ -5,6 +5,7 @@ import './App.css';
 import { API_PREFIX } from '../apiConfig';
 // පින්තූරය මෙතැනින් import කරන්න
 import sliitCampusImg from './sliit-campus.jpg'; 
+import InteractiveMap from './InteractiveMap';
 
 // --- Styles ---
 const styles = {
@@ -20,7 +21,7 @@ const styles = {
 
 function App() {
   const [inputs, setInputs] = useState({
-    itemName: '', description: '', category: '', location: '', dateFound: '', contact: ''
+    itemName: '', description: '', category: '', location: '', dateFound: '', contact: '', mapCoordinates: null
   });
   const [items, setItems] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -119,7 +120,7 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
         await axios.post(`${API_PREFIX}/found-items/add`, inputs);
         alert("Item added successfully!");
       }
-      setInputs({ itemName: '', description: '', category: '', location: '', dateFound: '', contact: '' });
+      setInputs({ itemName: '', description: '', category: '', location: '', dateFound: '', contact: '', mapCoordinates: null });
       fetchItems();
       navigate('/items');
     } catch (err) {
@@ -141,6 +142,15 @@ function RegistrationPage({ inputs, setInputs, isEditing, setIsEditing, currentI
         <div style={{textAlign: 'left', fontSize: '12px', color: '#7f8c8d'}}>Date Found:</div>
         <input type="date" name="dateFound" value={inputs.dateFound} max={today} onChange={handleChange} style={styles.input} required />
         <input name="contact" value={inputs.contact} placeholder="Contact Number" onChange={(e) => setInputs({ ...inputs, contact: e.target.value.replace(/\D/g, '').slice(0, 10) })} style={styles.input} required maxLength="10" pattern="[0-9]*" inputMode="numeric" />
+        
+        <div style={{marginTop: "15px", marginBottom: "15px"}}>
+          <div style={{textAlign: 'left', fontSize: '12px', color: '#7f8c8d', marginBottom: '8px'}}>Tap the map to pin exact location (Optional):</div>
+          <InteractiveMap 
+             onMapClick={(coords) => setInputs({ ...inputs, mapCoordinates: coords })} 
+             selectedPin={inputs.mapCoordinates} 
+          />
+        </div>
+
         <button type="submit" style={{ ...styles.button, backgroundColor: "#2c3e50" }}>
           {isEditing ? "Update Item" : "Submit Item"}
         </button>
@@ -161,7 +171,8 @@ function ListPage({ items, deleteItem, setInputs, setIsEditing, setCurrentId }) 
       category: item.category,
       location: item.location,
       dateFound: item.dateFound ? item.dateFound.split('T')[0] : '',
-      contact: item.contact
+      contact: item.contact,
+      mapCoordinates: item.mapCoordinates || null
     });
     navigate('/');
   };

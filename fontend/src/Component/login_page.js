@@ -40,14 +40,9 @@ function LoginPage({ onTogglePage, setCurrentEmail, setCurrentUser, onAdminLogin
         return;
       }
       setCurrentEmail && setCurrentEmail(email);
-      setCurrentUser && setCurrentUser(loginData.user || null);
 
-      if (loginData.user?.role === 'admin') {
-        if (typeof onAdminLogin === 'function') {
-          onAdminLogin();
-        }
-        return;
-      }
+      // We do NOT set the user or call onAdminLogin here anymore.
+      // Authentication is only complete after OTP verification.
 
       const otpResponse = await fetch(apiUrl('/users/send-otp'), {
         method: 'POST',

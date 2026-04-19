@@ -14,6 +14,12 @@ const foundItemSchema = new mongoose.Schema({
     claimDate: { type: Date },
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     status: { type: String, enum: ["active", "claimed", "expired"], default: "active" },
+    deliveryPerson: { type: String, default: "" },
+    trackingLocation: { type: String, default: "" },
+    mapCoordinates: {
+        x: { type: Number, default: null },
+        y: { type: Number, default: null }
+    },
     expiresAt: { type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
     expiredAt: { type: Date },
 }, { timestamps: true });

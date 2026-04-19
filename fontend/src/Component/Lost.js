@@ -5,11 +5,12 @@ import { API_PREFIX } from '../apiConfig';
 
 // Campus background photo
 import campusBg from './campus.jpg';
+import InteractiveMap from './InteractiveMap';
 
 // --- 1. Form Page (Add Item Validation) ---
 function FormPage() {
     const [formData, setFormData] = useState({
-        itemName: '', description: '', category: '', location: '', dateLost: '', contact: ''
+        itemName: '', description: '', category: '', location: '', dateLost: '', contact: '', mapCoordinates: null
     });
     const navigate = useNavigate();
     const today = new Date().toISOString().split('T')[0];
@@ -57,6 +58,15 @@ function FormPage() {
                         <input type="date" max={today} value={formData.dateLost} onChange={(e) => setFormData({ ...formData, dateLost: e.target.value })} required style={inputStyle} />
                     </div>
                     <input type="tel" placeholder="Contact Number (10 Digits)" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value.replace(/\D/g, '').slice(0, 10) })} required style={inputStyle} pattern="[0-9]*" inputMode="numeric" />
+                    
+                    <div style={{marginTop: "5px"}}>
+                        <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '8px' }}>Tap map to pin location (Optional):</label>
+                        <InteractiveMap 
+                           onMapClick={(coords) => setFormData({ ...formData, mapCoordinates: coords })} 
+                           selectedPin={formData.mapCoordinates} 
+                        />
+                    </div>
+
                     <button type="submit" style={btnStyle}>Report Item</button>
                 </form>
                 <Link to="/items" style={{ display: 'block', textAlign: 'center', marginTop: '20px', color: '#003366', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>View All Reported Items →</Link>
@@ -69,7 +79,7 @@ function FormPage() {
 function ListPage() {
     const [items, setItems] = useState([]);
     const [editingId, setEditingId] = useState(null);
-    const [editFormData, setEditFormData] = useState({});
+    const [editFormData, setEditFormData] = useState({ mapCoordinates: null });
 
     const fetchItems = async () => {
         try {
@@ -135,6 +145,12 @@ function ListPage() {
                                     <textarea style={{ ...smallInput, height: '50px' }} value={editFormData.description} onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })} required />
                                     <input style={smallInput} value={editFormData.location} onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })} required />
                                     <input style={smallInput} value={editFormData.contact} onChange={(e) => setEditFormData({ ...editFormData, contact: e.target.value.replace(/\D/g, '').slice(0, 10) })} required pattern="[0-9]*" inputMode="numeric" />
+                                    <div style={{marginTop: '10px'}}>
+                                        <InteractiveMap 
+                                           onMapClick={(coords) => setEditFormData({ ...editFormData, mapCoordinates: coords })} 
+                                           selectedPin={editFormData.mapCoordinates} 
+                                        />
+                                    </div>
                                     <div style={{ display: 'flex', gap: '5px' }}>
                                         <button onClick={() => handleUpdate(item._id)} style={{ ...actionBtn, backgroundColor: '#27ae60' }}>Save</button>
                                         <button onClick={() => setEditingId(null)} style={{ ...actionBtn, backgroundColor: '#95a5a6' }}>Cancel</button>

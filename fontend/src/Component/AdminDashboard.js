@@ -84,12 +84,28 @@ function formatShortDate(value) {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
 }
 
-const EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+const EXPIRY_MS = 25 * 24 * 60 * 60 * 1000;
+
+function digitsOnly(raw) {
+  return String(raw || '').replace(/\D/g, '');
+}
+
+function toWhatsAppDigits(raw) {
+  const d = digitsOnly(raw);
+  if (!d) return '';
+  if (d.length === 10 && d.startsWith('0')) return `94${d.slice(1)}`;
+  if (d.length === 9) return `94${d}`;
+  if (d.length === 11 && d.startsWith('94')) return d;
+  return d;
+}
+
+function buildMatchShareMessage(lost, found, score) {
+  return `Hi — iLost Admin here. We found a possible match (${score}%) for an item: lost "${lost.itemName}" ↔ found "${found.itemName}". Please check the system.`;
+}
 
 /** Unclaimed items with no match for 30+ days, or already marked expired by the scheduler. */
 function isNoMatchExpiredItem(item) {
   if (!item || item.claimed) return false;
-  if (item.status === 'expired') return true;
   const c = item.createdAt ? new Date(item.createdAt) : null;
   if (!c || Number.isNaN(c.getTime())) return false;
   return Date.now() - c.getTime() >= EXPIRY_MS;
@@ -200,6 +216,12 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
   });
   const [deletingFoundId, setDeletingFoundId] = useState('');
   const [qrDetailPair, setQrDetailPair] = useState(null);
+  const [editingDeliveryId, setEditingDeliveryId] = useState('');
+  const [editingDeliveryDraft, setEditingDeliveryDraft] = useState({
+    deliveryPerson: '',
+    trackingLocation: '',
+  });
+  const [forceEditAuctionId, setForceEditAuctionId] = useState('');
 
   const loadDashboardData = useCallback(async () => {
     setLoading(true);
@@ -481,6 +503,47 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
     }
   };
 
+  const startEditDelivery = (row) => {
+    setEditingDeliveryId(String(row._id));
+    setEditingDeliveryDraft({
+      deliveryPerson: row.deliveryPerson || '',
+      trackingLocation: row.trackingLocation || '',
+    });
+  };
+
+  const cancelEditDelivery = () => {
+    setEditingDeliveryId('');
+    setEditingDeliveryDraft({ deliveryPerson: '', trackingLocation: '' });
+  };
+
+  const saveDelivery = async (row) => {
+    const id = row._id;
+    if (!id) return;
+    const isLost = row.queueType === 'lost';
+    const endpoint = isLost ? `${API_PREFIX}/lost-items/update/${id}` : `${API_PREFIX}/found-items/update/${id}`;
+    
+    try {
+      const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...row,
+          deliveryPerson: editingDeliveryDraft.deliveryPerson,
+          trackingLocation: editingDeliveryDraft.trackingLocation,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || data.error || 'Could not update delivery.');
+        return;
+      }
+      await loadDashboardData();
+      cancelEditDelivery();
+    } catch {
+      alert('Cannot reach server.');
+    }
+  };
+
   const defaultsForAuction = (a) => ({
     winnerName: a.winnerBidderName || a.highestBidderName || '',
     winnerEmail: a.winnerBidderEmail || a.highestBidderEmail || '',
@@ -506,6 +569,11 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
     const f = formForAuction(a);
     if (!String(f.winnerName || '').trim() || !String(f.winnerEmail || '').trim()) {
       alert('Winner name and email are required.');
+      return;
+    }
+    const contactVal = String(f.deliveryContact || '').trim();
+    if (contactVal && contactVal.length !== 10) {
+      alert('Delivery contact must be exactly 10 digits.');
       return;
     }
     setSavingAuctionId(id);
@@ -681,6 +749,9 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
             onClick={() => setSection('notification')}
           >
             Notification
+            {unreadNotifications + itemExpiryRows.length > 0 && (
+              <span className="admin-nav-badge">{unreadNotifications + itemExpiryRows.length}</span>
+            )}
           </button>
           <button
             type="button"
@@ -802,7 +873,29 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                     <div className="admin-overview-stat-card__value">{unreadNotifications}</div>
                     <div className="admin-overview-stat-card__label">Unread notifications</div>
                   </div>
+                  <div className="admin-overview-stat-card admin-overview-stat-card--urgent">
+                    <button type="button" className="admin-overview-stat-card__view" onClick={() => setSection('notification')}>
+                      Review →
+                    </button>
+                    <span className="admin-overview-stat-card__icon admin-overview-stat-card__icon--expired" aria-hidden>
+                      ⌛
+                    </span>
+                    <div className="admin-overview-stat-card__value">{itemExpiryRows.length}</div>
+                    <div className="admin-overview-stat-card__label">Expired items</div>
+                  </div>
                 </div>
+
+                {itemExpiryRows.length > 0 && (
+                  <div className="admin-overview-alert">
+                    <span className="admin-overview-alert__icon">⚠️</span>
+                    <div className="admin-overview-alert__content">
+                      <strong>Action required:</strong> There are {itemExpiryRows.length} items that have been unclaimed for over 25 days. Please review them in the Notification section.
+                    </div>
+                    <button type="button" className="admin-overview-alert__btn" onClick={() => setSection('notification')}>
+                      Go to Notifications
+                    </button>
+                  </div>
+                )}
 
                 <div className="admin-overview-charts">
                   <div className="admin-overview-chart-panel">
@@ -983,11 +1076,11 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
               <div className="admin-users-panel admin-item-notify-panel">
                 <h2>Item notifications</h2>
                 <p className="hint">
-                  Unclaimed items with no match for 30 days or more (or marked expired). Delete removes the report and linked
+                  Unclaimed items with no match for 25 days or more (or marked expired). Delete removes the report and linked
                   alerts.
                 </p>
                 {itemExpiryRows.length === 0 ? (
-                  <p style={{ color: '#64748b', margin: 0 }}>No items in expired / 30-day no-match state.</p>
+                  <p style={{ color: '#64748b', margin: 0 }}>No items in expired / 25-day no-match state.</p>
                 ) : (
                   <div className="admin-mgmt-table-wrap">
                     <table>
@@ -1023,7 +1116,7 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                                 {row.status === 'expired' ? (
                                   <span className="admin-mgmt-badge admin-mgmt-badge--expired">Expired</span>
                                 ) : (
-                                  <span className="admin-mgmt-badge admin-mgmt-badge--warn">No match 30d+</span>
+                                  <span className="admin-mgmt-badge admin-mgmt-badge--warn">No match 25d+</span>
                                 )}
                               </td>
                               <td style={{ fontSize: '0.82rem', color: '#64748b' }}>{formatShortDate(row.createdAt)}</td>
@@ -1132,19 +1225,35 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                           </div>
                         )}
 
-                        {closed ? (
+                        {closed && forceEditAuctionId !== String(a._id) ? (
                           <div className="admin-auction-closed">
-                            <p>
-                              <strong>Winner:</strong> {a.winnerBidderName || a.highestBidderName || '—'} (
-                              {a.winnerBidderEmail || a.highestBidderEmail || '—'})
-                            </p>
-                            <p>
-                              <strong>Delivery person:</strong> {a.deliveryPersonName || '—'} ·{' '}
-                              {a.deliveryPersonContact || '—'}
-                            </p>
+                            <div className="admin-auction-closed__inner">
+                              <div>
+                                <p>
+                                  <strong>Winner:</strong> {a.winnerBidderName || a.highestBidderName || '—'} (
+                                  {a.winnerBidderEmail || a.highestBidderEmail || '—'})
+                                </p>
+                                <p>
+                                  <strong>Delivery person:</strong> {a.deliveryPersonName || '—'} ·{' '}
+                                  {a.deliveryPersonContact || '—'}
+                                </p>
+                              </div>
+                              <button 
+                                type="button" 
+                                className="admin-user-action-btn"
+                                onClick={() => setForceEditAuctionId(String(a._id))}
+                              >
+                                Update details
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <div className="admin-auction-assign">
+                            {closed && (
+                              <p className="admin-auction-assign-note">
+                                Updating delivery details for closed auction.
+                              </p>
+                            )}
                             <div className="admin-auction-assign__row">
                               <label>
                                 Winner name
@@ -1177,9 +1286,13 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                                 Delivery contact (phone)
                                 <input
                                   type="text"
+                                  maxLength={10}
                                   value={f.deliveryContact}
-                                  onChange={(e) => patchAuctionForm(a, { deliveryContact: e.target.value })}
-                                  placeholder="10-digit phone"
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    patchAuctionForm(a, { deliveryContact: val });
+                                  }}
+                                  placeholder="e.g. 07XXXXXXXX"
                                 />
                               </label>
                             </div>
@@ -1200,11 +1313,23 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                                 type="button"
                                 className="hero-btn-primary"
                                 disabled={savingAuctionId === String(a._id)}
-                                onClick={() => saveAuctionWinner(a)}
+                                onClick={async () => {
+                                  await saveAuctionWinner(a);
+                                  setForceEditAuctionId('');
+                                }}
                               >
-                                {savingAuctionId === String(a._id) ? 'Saving…' : 'Close auction & save'}
+                                {savingAuctionId === String(a._id) ? 'Saving…' : closed ? 'Save changes' : 'Close auction & save'}
                               </button>
                             </div>
+                            {closed && (
+                              <button 
+                                type="button" 
+                                className="admin-auction-cancel-edit"
+                                onClick={() => setForceEditAuctionId('')}
+                              >
+                                Cancel edit
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1260,6 +1385,26 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                           >
                             Analyse
                           </button>
+                          {toWhatsAppDigits(p.found.contact) && (
+                            <a 
+                              className="admin-user-action-btn admin-user-action-btn--wa" 
+                              href={`https://wa.me/${toWhatsAppDigits(p.found.contact)}?text=${encodeURIComponent(buildMatchShareMessage(p.lost, p.found, p.score))}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              WA Founder
+                            </a>
+                          )}
+                          {toWhatsAppDigits(p.lost.contact) && (
+                            <a 
+                              className="admin-user-action-btn admin-user-action-btn--wa" 
+                              href={`https://wa.me/${toWhatsAppDigits(p.lost.contact)}?text=${encodeURIComponent(buildMatchShareMessage(p.lost, p.found, p.score))}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              WA Owner
+                            </a>
+                          )}
                         </div>
                       </div>
                     );
@@ -1663,31 +1808,73 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                       <tr>
                         <th>Type</th>
                         <th>Item</th>
-                        <th>Location</th>
                         <th>Contact</th>
-                        <th>Status</th>
+                        <th>Delivery Person</th>
+                        <th>Tracking / Status</th>
+                        <th />
                       </tr>
                     </thead>
                     <tbody>
-                      {deliveryQueue.map((row) => (
-                        <tr key={`${row.queueType}-${row._id}`}>
-                          <td>
-                            <span
-                              className={`admin-mgmt-badge ${
-                                row.queueType === 'lost' ? 'admin-mgmt-badge--lost' : 'admin-mgmt-badge--found'
-                              }`}
-                            >
-                              {row.queueType === 'lost' ? 'Lost' : 'Found'}
-                            </span>
-                          </td>
-                          <td>{row.itemName || '—'}</td>
-                          <td>{row.location || '—'}</td>
-                          <td>{row.contact || '—'}</td>
-                          <td>
-                            <span className="admin-mgmt-badge admin-mgmt-badge--pending">Ready for delivery</span>
-                          </td>
-                        </tr>
-                      ))}
+                      {deliveryQueue.map((row) => {
+                        const rowId = String(row._id);
+                        const isEditing = editingDeliveryId === rowId;
+                        return (
+                          <tr key={`${row.queueType}-${rowId}`}>
+                            <td>
+                              <span
+                                className={`admin-mgmt-badge ${
+                                  row.queueType === 'lost' ? 'admin-mgmt-badge--lost' : 'admin-mgmt-badge--found'
+                                }`}
+                              >
+                                {row.queueType === 'lost' ? 'Lost' : 'Found'}
+                              </span>
+                            </td>
+                            <td>
+                              {row.itemName || '—'}
+                              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{row.location || '—'}</div>
+                            </td>
+                            <td>{row.contact || '—'}</td>
+                            <td>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  placeholder="e.g. John Doe / Desk"
+                                  value={editingDeliveryDraft.deliveryPerson}
+                                  onChange={(e) =>
+                                    setEditingDeliveryDraft((prev) => ({ ...prev, deliveryPerson: e.target.value }))
+                                  }
+                                />
+                              ) : (
+                                row.deliveryPerson || <span style={{ color: '#94a3b8' }}>Unassigned</span>
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  placeholder="Tracking link or 'Dispatched'"
+                                  value={editingDeliveryDraft.trackingLocation}
+                                  onChange={(e) =>
+                                    setEditingDeliveryDraft((prev) => ({ ...prev, trackingLocation: e.target.value }))
+                                  }
+                                />
+                              ) : (
+                                row.trackingLocation || <span className="admin-mgmt-badge admin-mgmt-badge--pending">Ready for delivery</span>
+                              )}
+                            </td>
+                            <td>
+                              {isEditing ? (
+                                <>
+                                  <button type="button" className="admin-user-action-btn" onClick={() => saveDelivery(row)}>Save</button>
+                                  <button type="button" className="admin-user-action-btn admin-user-action-btn--secondary" onClick={cancelEditDelivery}>Cancel</button>
+                                </>
+                              ) : (
+                                <button type="button" className="admin-user-action-btn" onClick={() => startEditDelivery(row)}>Assign & Track</button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1759,7 +1946,29 @@ function AdminDashboard({ onTogglePage, currentUser, currentEmail }) {
                 </div>
               </div>
               <div className="admin-qr-modal__footer">
-                <span className="admin-qr-modal__score">Match score: {qrDetailPair.score}%</span>
+                <div className="admin-qr-modal__actions-left">
+                  <span className="admin-qr-modal__score">Match score: {qrDetailPair.score}%</span>
+                  {toWhatsAppDigits(qrDetailPair.found.contact) && (
+                    <a 
+                      className="admin-user-action-btn admin-user-action-btn--wa" 
+                      href={`https://wa.me/${toWhatsAppDigits(qrDetailPair.found.contact)}?text=${encodeURIComponent(buildMatchShareMessage(qrDetailPair.lost, qrDetailPair.found, qrDetailPair.score))}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      WhatsApp Founder
+                    </a>
+                  )}
+                  {toWhatsAppDigits(qrDetailPair.lost.contact) && (
+                    <a 
+                      className="admin-user-action-btn admin-user-action-btn--wa" 
+                      href={`https://wa.me/${toWhatsAppDigits(qrDetailPair.lost.contact)}?text=${encodeURIComponent(buildMatchShareMessage(qrDetailPair.lost, qrDetailPair.found, qrDetailPair.score))}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      WhatsApp Owner
+                    </a>
+                  )}
+                </div>
                 <button
                   type="button"
                   className="hero-btn-secondary"

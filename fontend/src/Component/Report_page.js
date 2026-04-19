@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import './Home.css';
 import { API_PREFIX } from '../apiConfig';
+import InteractiveMap from './InteractiveMap';
 
 const CATEGORIES = ['Electronics', 'Documents', 'Clothes', 'Accessories', 'Others'];
 
@@ -13,6 +14,7 @@ const EMPTY_LOST = {
   dateLost: '',
   contact: '',
   imageUrls: [],
+  mapCoordinates: null,
 };
 
 const EMPTY_FOUND = {
@@ -23,6 +25,7 @@ const EMPTY_FOUND = {
   dateFound: '',
   contact: '',
   imageUrls: [],
+  mapCoordinates: null,
 };
 
 function ReportPage({
@@ -42,6 +45,30 @@ function ReportPage({
   const [locating, setLocating] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
+  useEffect(() => {
+    try {
+      const type = localStorage.getItem('pendingReportType');
+      if (type && (type === 'lost' || type === 'found')) {
+        setMode(type);
+        setStep('form');
+        localStorage.removeItem('pendingReportType');
+      }
+
+      const pending = localStorage.getItem('pendingPin');
+      if (pending) {
+        const coords = JSON.parse(pending);
+        if (type === 'lost') {
+            setLostForm(prev => ({ ...prev, mapCoordinates: coords }));
+        } else if (type === 'found') {
+            setFoundForm(prev => ({ ...prev, mapCoordinates: coords }));
+        }
+        localStorage.removeItem('pendingPin');
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }, []);
+
   const updateForm = (key, value) => {
     if (mode === 'lost') {
       setLostForm((prev) => ({ ...prev, [key]: value }));
@@ -51,30 +78,6 @@ function ReportPage({
   };
 
   const values = mode === 'lost' ? lostForm : foundForm;
-  const locationQuery = encodeURIComponent(values.location || 'Colombo, Sri Lanka');
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${locationQuery}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
-  const mapSearchUrl = `https://www.openstreetmap.org/search?query=${locationQuery}`;
-
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported on this browser.');
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude.toFixed(6);
-        const lng = position.coords.longitude.toFixed(6);
-        updateForm('location', `${lat}, ${lng}`);
-        setLocating(false);
-      },
-      () => {
-        alert('Could not get your current location.');
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -91,6 +94,7 @@ function ReportPage({
       contact: String(values.contact || '').replace(/\D/g, '').slice(0, 10),
       imageUrls: Array.isArray(values.imageUrls) ? values.imageUrls : [],
       imageUrl: Array.isArray(values.imageUrls) && values.imageUrls.length ? values.imageUrls[0] : '',
+      mapCoordinates: values.mapCoordinates || null,
     };
 
     if (!payload.itemName || !payload.description || !payload.category || !payload.location || !payload.contact) {
@@ -255,28 +259,13 @@ function ReportPage({
                 onChange={(e) => updateForm('location', e.target.value)}
                 style={{ padding: '0.8rem 0.9rem', borderRadius: 8, border: '1px solid #dbe3ee' }}
               />
-              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button type="button" className="hero-btn-secondary" onClick={handleUseCurrentLocation} disabled={locating}>
-                  {locating ? 'Getting location...' : 'Use Current Location'}
-                </button>
-                <a href={mapSearchUrl} target="_blank" rel="noreferrer" className="hero-btn-secondary">
-                  Open in Map
-                </a>
-              </div>
-              <div style={{ border: '1px solid #dbe3ee', borderRadius: 10, overflow: 'hidden' }}>
-                <iframe
-                  title="Location map preview"
-                  src={mapEmbedUrl}
-                  style={{ width: '100%', height: 240, border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
+              <div style={{marginTop: "5px", marginBottom: "5px"}}>
+                <label style={{ fontSize: '0.9rem', color: '#334155', display: 'block', marginBottom: '8px' }}>Tap map to pin exact location (Optional):</label>
+                <InteractiveMap 
+                   onMapClick={(coords) => updateForm('mapCoordinates', coords)} 
+                   selectedPin={values.mapCoordinates} 
                 />
               </div>
-              {values.location ? (
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
-                  Map search target: <strong>{values.location}</strong>
-                </p>
-              ) : null}
               <input
                 type="date"
                 max={today}
